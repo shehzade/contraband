@@ -1,0 +1,2677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CONTRABAND // Command Center Live Telemetry</title>
+  <style>
+    :root {
+      --bg: #0a0a0c;
+      --card-bg: #121218;
+      --card-hover: #181924;
+      --border: #1a2234;
+      --border-bright: #2b3954;
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.4);
+      --blue: #0ea5e9;
+      --blue-glow: rgba(14, 165, 233, 0.35);
+      --crimson: #ef4444;
+      --crimson-glow: rgba(239, 68, 68, 0.4);
+      --amber: #f59e0b;
+      --amber-glow: rgba(245, 158, 11, 0.35);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.4);
+      --green: #10b981;
+      --green-glow: rgba(16, 185, 129, 0.4);
+      --text: #e2e8f0;
+      --text-dim: #718096;
+      --text-bright: #ffffff;
+      --mono-font: 'JetBrains Mono', 'SF Mono', Consolas, Monaco, monospace;
+      --sans-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans-font);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Top Nav */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      background: rgba(14, 17, 26, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      color: #000;
+      font-weight: 900;
+      font-size: 13px;
+      letter-spacing: 2px;
+      padding: 6px 12px;
+      border-radius: 4px;
+      box-shadow: 0 0 16px var(--cyan-glow);
+      text-transform: uppercase;
+    }
+    .brand h1 {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: var(--text-bright);
+    }
+    .brand h1 span {
+      color: var(--cyan);
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .feed-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono-font);
+      font-size: 12px;
+      background: rgba(0, 255, 102, 0.1);
+      border: 1px solid var(--green);
+      color: var(--green);
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+    .feed-pulse {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+    .nav-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border-bright);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .nav-btn:hover {
+      background: var(--border);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.12) !important;
+      border-color: rgba(239, 68, 68, 0.4) !important;
+      color: var(--crimson) !important;
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25) !important;
+      border-color: var(--crimson) !important;
+      color: #fff !important;
+      box-shadow: 0 0 10px var(--crimson-glow);
+    }
+
+    /* Container */
+    .container {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      padding: 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-sizing: border-box;
+    }
+
+    /* Radial Dials Row */
+    .dials-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 1200px) {
+      .dials-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .dials-grid { grid-template-columns: 1fr; }
+    }
+
+    .dial-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .dial-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-bright);
+    }
+    .dial-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--dial-accent, var(--cyan)), transparent);
+    }
+    .dial-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .gauge-wrapper {
+      position: relative;
+      width: 170px;
+      height: 170px;
+    }
+    .gauge-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+    .gauge-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.06);
+      stroke-width: 12;
+    }
+    .gauge-progress {
+      fill: none;
+      stroke-width: 12;
+      stroke-linecap: round;
+      stroke-dasharray: 440;
+      stroke-dashoffset: 440;
+      transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .gauge-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .gauge-val {
+      font-family: var(--mono-font);
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-bright);
+      line-height: 1;
+    }
+    .gauge-unit {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: var(--mono-font);
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+    .dial-meta {
+      margin-top: 14px;
+      font-size: 12px;
+      font-family: var(--mono-font);
+      color: var(--text-dim);
+    }
+
+    /* Grid Sections */
+    .matrices-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 1100px) {
+      .matrices-grid { grid-template-columns: 1fr; }
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 1100px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .section-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      font-weight: 800;
+      color: var(--text-bright);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--cyan);
+    }
+    .badge-count {
+      background: rgba(0, 255, 204, 0.1);
+      color: var(--cyan);
+      font-family: var(--mono-font);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 255, 204, 0.3);
+    }
+
+    /* Active Streams Table / Feed */
+    .stream-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+    .stream-row {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      display: grid;
+      grid-template-columns: minmax(130px, 180px) minmax(160px, 240px) 120px 1fr 100px 130px;
+      align-items: center;
+      gap: 14px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .stream-row-active {
+      border-color: rgba(0, 255, 102, 0.4);
+      background: rgba(0, 255, 102, 0.03);
+      box-shadow: 0 0 12px rgba(0, 255, 102, 0.08);
+    }
+    .stream-row-recent {
+      border-color: rgba(255, 255, 255, 0.06);
+    }
+    .stream-row:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--border-bright);
+    }
+    @media (max-width: 1024px) {
+      .stream-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+    }
+    .host-info {
+      font-family: var(--mono-font);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-bright);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .zone-pill {
+      font-family: var(--mono-font);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      text-align: center;
+      background: rgba(0, 168, 255, 0.15);
+      color: var(--blue);
+      border: 1px solid rgba(0, 168, 255, 0.4);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .proto-pill {
+      font-family: var(--mono-font);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      text-align: center;
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.4);
+    }
+    .progress-bar-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .progress-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-fill {
+      background: linear-gradient(90deg, var(--cyan), var(--blue));
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 8px var(--cyan-glow);
+    }
+    .progress-fill.fill-success {
+      background: linear-gradient(90deg, var(--green), var(--emerald));
+      box-shadow: 0 0 8px var(--emerald-glow);
+    }
+    .progress-fill.fill-blocked {
+      background: linear-gradient(90deg, var(--crimson), #f43f5e);
+      box-shadow: 0 0 8px var(--crimson-glow);
+    }
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono-font);
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+    .rate-val {
+      font-family: var(--mono-font);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--cyan);
+      text-align: right;
+    }
+    .status-badge {
+      font-family: var(--mono-font);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .status-streaming {
+      background: rgba(0, 255, 102, 0.15);
+      color: var(--green);
+      border: 1px solid var(--green);
+      animation: pulse 2s infinite;
+    }
+    .status-success {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--green);
+      border: 1px solid var(--green);
+    }
+    .status-blocked {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--crimson);
+      border: 1px solid var(--crimson);
+    }
+    .status-idle {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+    .empty-state {
+      padding: 40px;
+      text-align: center;
+      color: var(--text-dim);
+      font-family: var(--mono-font);
+      font-size: 13px;
+    }
+
+    /* 20-Protocol Smuggling Matrix Grid */
+    .protocol-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .proto-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .proto-card:hover {
+      border-color: var(--border-bright);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .proto-card.active-stream {
+      border-color: var(--green);
+      box-shadow: 0 0 12px var(--green-glow);
+      background: rgba(0, 255, 102, 0.04);
+    }
+    .proto-card.blocked-state {
+      border-color: var(--crimson);
+      background: rgba(255, 0, 85, 0.04);
+    }
+    .proto-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .proto-name {
+      font-family: var(--mono-font);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-bright);
+      text-transform: uppercase;
+    }
+    .proto-beacon {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-dim);
+    }
+    .beacon-ready { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+    .beacon-streaming { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 1.2s infinite; }
+    .beacon-blocked { background: var(--crimson); box-shadow: 0 0 6px var(--crimson); }
+    .proto-vol {
+      font-family: var(--mono-font);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* Port Status Matrix // Rack View */
+    .ports-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+      gap: 10px;
+    }
+    .port-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .port-card:hover {
+      border-color: var(--border-bright);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .port-card.status-receiving {
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan-glow);
+      background: rgba(6, 182, 212, 0.05);
+    }
+    .port-card.status-reflection {
+      border-color: var(--amber);
+      box-shadow: 0 0 10px var(--amber-glow);
+      background: rgba(245, 158, 11, 0.05);
+    }
+    .port-card.status-blocked {
+      border-color: var(--crimson);
+      box-shadow: 0 0 8px var(--crimson-glow);
+      background: rgba(239, 68, 68, 0.05);
+    }
+    .port-card.status-listening {
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+    .port-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .port-num {
+      font-family: var(--mono-font);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-bright);
+    }
+    .port-beacon {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+    .beacon-listening {
+      background: var(--emerald);
+      box-shadow: 0 0 6px var(--emerald-glow);
+    }
+    .beacon-receiving {
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan-glow);
+      animation: pulse 0.8s infinite;
+    }
+    .beacon-reflection {
+      background: var(--amber);
+      box-shadow: 0 0 10px var(--amber-glow);
+      animation: pulse 1.0s infinite;
+    }
+    .beacon-port-blocked {
+      background: var(--crimson);
+      box-shadow: 0 0 6px var(--crimson-glow);
+    }
+    .beacon-idle {
+      background: var(--text-dim);
+    }
+    .port-meta {
+      font-family: var(--mono-font);
+      font-size: 10px;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Live Terminal Console */
+    #liveEventStreamSection {
+      transition: all 0.25s ease;
+    }
+    #liveEventStreamSection.full-bleed {
+      margin-left: -24px;
+      margin-right: -24px;
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+      width: calc(100% + 48px);
+      box-shadow: 0 0 32px rgba(0, 0, 0, 0.85);
+    }
+    .terminal-card {
+      background: #050608;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      height: 480px;
+      overflow: hidden;
+      font-family: var(--mono-font);
+      box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.7);
+      transition: height 0.25s ease, width 0.25s ease;
+    }
+    .terminal-card.expanded {
+      height: 720px;
+    }
+    .terminal-card.compact {
+      height: 340px;
+    }
+    .terminal-card.fullscreen {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      height: calc(100vh - 20px) !important;
+      width: calc(100vw - 20px) !important;
+      z-index: 99999;
+      border: 1px solid var(--cyan);
+      box-shadow: 0 0 60px rgba(0, 0, 0, 0.95), 0 0 25px var(--cyan-glow);
+    }
+    body.terminal-fullscreen-active {
+      overflow: hidden;
+    }
+    .terminal-header {
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .terminal-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .filter-pills {
+      display: flex;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 2px 4px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    .filter-pill {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-family: var(--mono-font);
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-pill:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .filter-pill.active {
+      color: #000;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan-glow);
+    }
+    .filter-pill.pill-alert.active {
+      background: var(--crimson);
+      color: #fff;
+      box-shadow: 0 0 8px var(--crimson-glow);
+    }
+    .filter-pill.pill-success.active {
+      background: var(--green);
+      color: #000;
+      box-shadow: 0 0 8px var(--green-glow);
+    }
+    .filter-pill.pill-exfil.active {
+      background: var(--blue);
+      color: #fff;
+      box-shadow: 0 0 8px var(--blue-glow);
+    }
+    .filter-pill.pill-info.active {
+      background: var(--text-dim);
+      color: #fff;
+    }
+    .auto-scroll-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono-font);
+      font-size: 11px;
+      color: var(--text-dim);
+      cursor: pointer;
+      user-select: none;
+    }
+    .auto-scroll-label input {
+      cursor: pointer;
+      accent-color: var(--cyan);
+    }
+    .terminal-logs {
+      padding: 12px 16px;
+      overflow-y: auto;
+      overflow-x: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .terminal-logs.nowrap .log-line {
+      white-space: nowrap;
+    }
+    .log-line {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      transition: background 0.1s;
+      white-space: pre-wrap;
+    }
+    .log-line:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .log-time {
+      color: var(--text-dim);
+      flex-shrink: 0;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+    }
+    .log-lvl {
+      font-weight: 800;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      padding: 1px 7px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+    .lvl-INFO    { color: var(--blue); background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(14, 165, 233, 0.25); }
+    .lvl-SUCCESS { color: var(--green); background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.25); }
+    .lvl-WARN    { color: var(--amber); background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.25); }
+    .lvl-ALERT   { color: var(--crimson); background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .lvl-EXFIL   { color: var(--cyan); background: rgba(6, 182, 212, 0.12); border: 1px solid rgba(6, 182, 212, 0.25); }
+    .log-zone {
+      color: #c084fc;
+      background: rgba(168, 85, 247, 0.1);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .log-proto {
+      color: var(--cyan);
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+      flex-shrink: 0;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+    .log-msg {
+      color: var(--text);
+      flex: 1;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+
+    /* Reports Drawer / Modal */
+    .reports-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .reports-table th {
+      text-align: left;
+      padding: 10px 14px;
+      color: var(--text-dim);
+      font-family: var(--mono-font);
+      font-size: 11px;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+    }
+    .reports-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .report-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .action-link {
+      color: var(--cyan);
+      text-decoration: none;
+      font-family: var(--mono-font);
+      font-size: 11px;
+      padding: 3px 8px;
+      border: 1px solid rgba(0, 255, 204, 0.3);
+      border-radius: 4px;
+      background: rgba(0, 255, 204, 0.05);
+      transition: all 0.2s;
+    }
+    .action-link:hover {
+      background: rgba(0, 255, 204, 0.2);
+      border-color: var(--cyan);
+    }
+
+    /* Modal for previewing HTML reports */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--border-bright);
+      border-radius: 12px;
+      width: 95vw;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .modal-iframe {
+      flex: 1;
+      border: none;
+      background: #08090c;
+    }
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-bright);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.95), 0 0 24px rgba(239, 68, 68, 0.25);
+    }
+    .modal-body {
+      padding: 20px;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .btn-cyan {
+      background: rgba(6, 182, 212, 0.12) !important;
+      border-color: rgba(6, 182, 212, 0.45) !important;
+      color: var(--cyan) !important;
+    }
+    .btn-cyan:hover {
+      background: rgba(6, 182, 212, 0.25) !important;
+      border-color: var(--cyan) !important;
+      box-shadow: 0 0 14px var(--cyan-glow);
+    }
+    .modal-card-lg {
+      background: var(--card-bg);
+      border: 1px solid var(--border-bright);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 920px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 32px rgba(6, 182, 212, 0.2);
+    }
+    .modal-body-scroll {
+      padding: 22px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .gen-section-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--cyan);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+    .gen-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 768px) {
+      .gen-grid { grid-template-columns: 1fr; }
+    }
+    .gen-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .gen-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .gen-input, .gen-select {
+      background: rgba(8, 11, 18, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-bright);
+      font-family: var(--mono-font);
+      font-size: 12px;
+      padding: 7px 11px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .gen-input:focus, .gen-select:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan-glow);
+    }
+    .gen-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .gen-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 4px 9px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: var(--mono-font);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+    }
+    .gen-pill:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+    .gen-pill.active {
+      background: rgba(6, 182, 212, 0.18);
+      border-color: var(--cyan);
+      color: var(--cyan);
+      font-weight: 700;
+      box-shadow: 0 0 8px var(--cyan-glow);
+    }
+    .gen-cmd-box {
+      background: #05070c;
+      border: 1px solid var(--border-bright);
+      border-radius: 8px;
+      padding: 14px 16px;
+      position: relative;
+    }
+    .gen-cmd-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 11px;
+      font-family: var(--mono-font);
+      color: var(--text-dim);
+    }
+    .gen-cmd-text {
+      font-family: var(--mono-font);
+      font-size: 12px;
+      color: #38bdf8;
+      line-height: 1.6;
+      word-break: break-all;
+      white-space: pre-wrap;
+      user-select: all;
+    }
+    .gen-checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 12px;
+      font-family: var(--mono-font);
+    }
+    .gen-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: var(--text-bright);
+      user-select: none;
+    }
+    .gen-checkbox-label input[type="checkbox"] {
+      accent-color: var(--cyan);
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="logo-badge">CTB//01</div>
+      <h1>CONTRABAND <span>COMMAND CENTER</span></h1>
+    </div>
+    <div class="nav-actions">
+      <span id="liveClock" style="font-family: var(--mono-font); font-size: 13px; color: var(--text-dim); background: var(--card-bg); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px;">--:--:-- UTC</span>
+      <div class="feed-status" id="connStatus">
+        <div class="feed-pulse" id="connPulse"></div>
+        <span id="connText">STREAM CONNECTED</span>
+      </div>
+      <button class="nav-btn btn-cyan" onclick="openCmdGenModal()" style="display: flex; align-items: center; gap: 6px;">
+        <span style="font-size: 13px;">⚡</span> CLIENT CLI GENERATOR
+      </button>
+      <button class="nav-btn" onclick="scrollToReports()">VIEW SAVED REPORTS</button>
+      <button class="nav-btn btn-danger" onclick="openResetModal()">RESET DASHBOARD</button>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Radial Dials Section -->
+    <div class="dials-grid">
+      <!-- Dial 1: Instantaneous Throughput -->
+      <div class="dial-card" style="--dial-accent: var(--cyan);">
+        <div class="dial-title">Instant Throughput</div>
+        <div class="gauge-wrapper">
+          <svg class="gauge-svg" viewBox="0 0 160 160">
+            <circle class="gauge-bg" cx="80" cy="80" r="65"></circle>
+            <circle class="gauge-progress" id="dialThroughputProg" cx="80" cy="80" r="65" stroke="var(--cyan)" style="filter: drop-shadow(0 0 8px var(--cyan-glow));"></circle>
+          </svg>
+          <div class="gauge-center">
+            <div class="gauge-val" id="dialThroughputVal">0.00</div>
+            <div class="gauge-unit">MB/S</div>
+          </div>
+        </div>
+        <div class="dial-meta" id="dialPeakThroughput">Peak: 0.00 MB/s</div>
+      </div>
+
+      <!-- Dial 2: Total Smuggled Data -->
+      <div class="dial-card" style="--dial-accent: var(--blue);">
+        <div class="dial-title">Total Smuggled Data</div>
+        <div class="gauge-wrapper">
+          <svg class="gauge-svg" viewBox="0 0 160 160">
+            <circle class="gauge-bg" cx="80" cy="80" r="65"></circle>
+            <circle class="gauge-progress" id="dialVolumeProg" cx="80" cy="80" r="65" stroke="var(--blue)" style="filter: drop-shadow(0 0 8px var(--blue-glow));"></circle>
+          </svg>
+          <div class="gauge-center">
+            <div class="gauge-val" id="dialVolumeVal" style="font-size: 22px;">0 B</div>
+            <div class="gauge-unit">VOLUME</div>
+          </div>
+        </div>
+        <div class="dial-meta" id="dialTotalChunks">0 Chunks Assembled</div>
+      </div>
+
+      <!-- Dial 3: Global EEI Exposure Score -->
+      <div class="dial-card" style="--dial-accent: var(--green);" id="cardEEI">
+        <div class="dial-title">EEI Exposure Score</div>
+        <div class="gauge-wrapper">
+          <svg class="gauge-svg" viewBox="0 0 160 160">
+            <circle class="gauge-bg" cx="80" cy="80" r="65"></circle>
+            <circle class="gauge-progress" id="dialEEIProg" cx="80" cy="80" r="65" stroke="var(--green)" style="filter: drop-shadow(0 0 8px var(--green-glow));"></circle>
+          </svg>
+          <div class="gauge-center">
+            <div class="gauge-val" id="dialEEIVal">0%</div>
+            <div class="gauge-unit" id="dialEEIPosture">HARDENED</div>
+          </div>
+        </div>
+        <div class="dial-meta" id="dialEEIMeta">Egress Posture Rating</div>
+      </div>
+
+      <!-- Dial 4: Active Concurrency -->
+      <div class="dial-card" style="--dial-accent: #a855f7;">
+        <div class="dial-title">Active Streams</div>
+        <div class="gauge-wrapper">
+          <svg class="gauge-svg" viewBox="0 0 160 160">
+            <circle class="gauge-bg" cx="80" cy="80" r="65"></circle>
+            <circle class="gauge-progress" id="dialConcProg" cx="80" cy="80" r="65" stroke="#a855f7" style="filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.4));"></circle>
+          </svg>
+          <div class="gauge-center">
+            <div class="gauge-val" id="dialConcVal">0</div>
+            <div class="gauge-unit">CONCURRENT</div>
+          </div>
+        </div>
+        <div class="dial-meta" id="dialTotalSessions">0 Total Sessions</div>
+      </div>
+    </div>
+
+    <!-- Active Exfiltration Streams & Zone Feeds -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+          Multi-Zone Real-Time Exfiltration Streams
+        </div>
+        <div class="badge-count" id="activeStreamsBadge">0 Active</div>
+      </div>
+      <div class="stream-feed" id="activeStreamsFeed">
+        <div class="empty-state">No active exfiltration streams currently transmitting. Standby for client triggers...</div>
+      </div>
+    </div>
+
+    <!-- Live Event Stream Console (Full Width Dedicated Section) -->
+    <div class="section-card" id="liveEventStreamSection">
+      <div class="section-header">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zm-2-1h-4v-2h4v2zm-7.7-4.3L6.7 12l3.6-3.7 1.4 1.4-2.3 2.3 2.3 2.3-1.4 1.4z"/></svg>
+          Live Event Stream
+          <span class="badge-count" id="logCountBadge">0 Events</span>
+        </div>
+        <div class="terminal-controls">
+          <div class="filter-pills" id="logFilterGroup">
+            <button class="filter-pill active" id="filterBtnALL" onclick="setLogFilter('ALL')">ALL</button>
+            <button class="filter-pill pill-alert" id="filterBtnALERT" onclick="setLogFilter('ALERT')">ALERTS</button>
+            <button class="filter-pill pill-success" id="filterBtnSUCCESS" onclick="setLogFilter('SUCCESS')">SUCCESS</button>
+            <button class="filter-pill pill-exfil" id="filterBtnEXFIL" onclick="setLogFilter('EXFIL')">EXFIL</button>
+            <button class="filter-pill pill-info" id="filterBtnINFO" onclick="setLogFilter('INFO')">INFO</button>
+          </div>
+          <label class="auto-scroll-label">
+            <input type="checkbox" id="autoScrollToggle" checked onchange="toggleAutoScroll(this.checked)">
+            <span>Auto-scroll</span>
+          </label>
+          <button class="nav-btn" id="wrapToggleBtn" style="padding: 4px 10px; font-size: 11px;" onclick="toggleLogWrap()" title="Toggle text wrap">NOWRAP</button>
+          <button class="nav-btn" id="wideToggleBtn" style="padding: 4px 10px; font-size: 11px;" onclick="toggleLogWide()" title="Expand terminal window horizontally edge-to-edge">↔ WIDE</button>
+          <button class="nav-btn" id="expandToggleBtn" style="padding: 4px 10px; font-size: 11px;" onclick="toggleLogExpand()" title="Toggle vertical height (480px / 720px)">↕ TALL</button>
+          <button class="nav-btn" id="fullscreenToggleBtn" style="padding: 4px 10px; font-size: 11px;" onclick="toggleLogFullscreen()" title="Maximize terminal to full screen (ESC to exit)">⛶ MAXIMIZE</button>
+          <button class="nav-btn" style="padding: 4px 10px; font-size: 11px;" onclick="clearLogs()">CLEAR</button>
+        </div>
+      </div>
+      <div class="terminal-card" id="terminalCard">
+        <div class="terminal-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="feed-pulse" style="width: 6px; height: 6px;"></div>
+            <span>TERMINAL LOG (HH:MM:SS.mmm) // REAL-TIME SSE FEED</span>
+          </div>
+          <span style="color: var(--cyan); letter-spacing: 1px;">SSE // LIVE</span>
+        </div>
+        <div class="terminal-logs" id="terminalLogs">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Telemetry Matrices Grid: 20-Protocol Smuggling Matrix & Monitored Ports Rack View -->
+    <div class="matrices-grid">
+      <!-- 20 Protocol Smuggling Matrix -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+            20-Protocol Smuggling Matrix
+          </div>
+          <div class="badge-count">20 Listeners</div>
+        </div>
+        <div class="protocol-grid" id="protocolGrid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Port Status Matrix // Multi-Zone Rack Telemetry -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+            Port Status Matrix // Multi-Zone Rack Telemetry
+          </div>
+          <div class="badge-count" id="portsCountBadge">20 Monitored Ports</div>
+        </div>
+        <div class="ports-grid" id="portsGrid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Synchronized Assessment Reports -->
+    <div class="section-card" id="reportsSection">
+      <div class="section-header">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+          Synchronized Client Assessment Reports
+        </div>
+        <div class="badge-count" id="reportsCountBadge">0 Stored</div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="reports-table">
+          <thead>
+            <tr>
+              <th>Report ID</th>
+              <th>Target Host</th>
+              <th>Network Zone</th>
+              <th>Client Node</th>
+              <th>EEI Score</th>
+              <th>Probes</th>
+              <th>Uploaded</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="reportsTableBody">
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 24px;">No client reports synchronized yet. Run client with <code>--sync-report &lt;dashboard-url&gt;</code> to upload findings.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal for Report Previews -->
+  <div class="modal-overlay" id="reportModal" onclick="closeReportModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div style="font-weight: 800; font-family: var(--mono-font); font-size: 14px;" id="modalReportTitle">ASSESSMENT REPORT PREVIEW</div>
+        <button class="nav-btn" onclick="closeReportModal()">CLOSE</button>
+      </div>
+      <iframe class="modal-iframe" id="reportIframe"></iframe>
+    </div>
+  </div>
+
+  <!-- Modal for Dashboard Reset Confirmation -->
+  <div class="modal-overlay" id="resetModal" onclick="closeResetModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div style="font-weight: 800; font-family: var(--mono-font); font-size: 14px; color: var(--crimson); letter-spacing: 0.5px;">RESET DASHBOARD & CLEAR TELEMETRY</div>
+        <button class="nav-btn" onclick="closeResetModal()">✕</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; padding: 20px;">
+        <p style="color: var(--text-bright); line-height: 1.5; font-size: 13px; margin: 0;">
+          Are you sure you want to reset the live telemetry dashboard? This will zero all throughput dials, clear in-flight streams, wipe terminal logs, and reset protocol/port matrix counters.
+        </p>
+        <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 12px 14px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; user-select: none;">
+          <input type="checkbox" id="resetDeleteFiles" style="margin-top: 3px; accent-color: var(--crimson); width: 16px; height: 16px; cursor: pointer;" />
+          <span style="font-size: 12px; font-family: var(--mono-font); color: var(--text-bright); line-height: 1.4;">
+            <strong style="color: var(--crimson);">Delete exfiltrated evidence files from disk (/evidence)</strong>
+            <br>
+            <span style="color: var(--text-dim); font-size: 11px;">Permanently purge physical reconstructed binary payloads and PCAPs from the server evidence storage directory.</span>
+          </span>
+        </label>
+        <div id="resetFeedback" style="font-size: 12px; font-family: var(--mono-font); min-height: 18px;"></div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border); background: rgba(255, 255, 255, 0.02);">
+        <button class="nav-btn" onclick="closeResetModal()">CANCEL</button>
+        <button class="nav-btn btn-danger" id="confirmResetBtn" onclick="executeReset()">CONFIRM RESET</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Contraband Client Command Generator -->
+  <div class="modal-overlay" id="cmdGenModal" onclick="closeCmdGenModal(event)">
+    <div class="modal-card-lg" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="color: var(--cyan); font-size: 16px;">⚡</span>
+          <div>
+            <div style="font-weight: 800; font-family: var(--mono-font); font-size: 14px; color: var(--text-bright); letter-spacing: 0.5px;">CLIENT CLI COMMAND GENERATOR</div>
+            <div style="font-size: 11px; color: var(--text-dim); font-family: var(--sans-font);">Tailored command builder for automated network egress assessment and data smuggling</div>
+          </div>
+        </div>
+        <button class="nav-btn" onclick="closeCmdGenModal()">✕</button>
+      </div>
+
+      <div class="modal-body-scroll">
+        <!-- Assessment Presets -->
+        <div>
+          <div class="gen-section-title"><span>✦</span> Operational Presets</div>
+          <div class="gen-pills" id="cgPresets">
+            <div class="gen-pill active" onclick="applyCgPreset('full')">🚀 Full Assessment</div>
+            <div class="gen-pill" onclick="applyCgPreset('quic-ws')">⚡ High-Speed Smuggle (QUIC + WS)</div>
+            <div class="gen-pill" onclick="applyCgPreset('stealth')">🥷 Low &amp; Slow Covert (DNS+ICMP)</div>
+            <div class="gen-pill" onclick="applyCgPreset('proxy')">🏢 Proxy &amp; NTLM Traversal</div>
+            <div class="gen-pill" onclick="applyCgPreset('smb')">📦 Enterprise SMB Reflection</div>
+            <div class="gen-pill" onclick="applyCgPreset('dlp')">🔒 DLP Exfiltration Validation</div>
+          </div>
+        </div>
+
+        <!-- Target & Platform Grid -->
+        <div class="gen-grid">
+          <div class="gen-field">
+            <div class="gen-label">Binary Platform</div>
+            <select class="gen-select" id="cgPlatform" onchange="updateGeneratedCommand()">
+              <option value="./bin/contraband client">./bin/contraband client (Standard Pure-Go)</option>
+              <option value="./bin/dist/contraband-client-linux-amd64">./bin/dist/contraband-client-linux-amd64 (Linux x86_64)</option>
+              <option value="./bin/dist/contraband-client-linux-arm64">./bin/dist/contraband-client-linux-arm64 (Linux ARM64)</option>
+              <option value=".\bin\dist\contraband-client-windows-amd64.exe">.\bin\dist\contraband-client-windows-amd64.exe (Windows x64)</option>
+              <option value="./bin/dist/contraband-client-darwin-arm64">./bin/dist/contraband-client-darwin-arm64 (macOS Apple Silicon)</option>
+              <option value="docker run --rm -it shehzade/contraband client">docker run --rm -it shehzade/contraband client</option>
+            </select>
+          </div>
+          <div class="gen-field">
+            <div class="gen-label">Target Server IP / Host</div>
+            <input class="gen-input" type="text" id="cgServer" placeholder="127.0.0.1 or server IP" value="127.0.0.1" oninput="updateGeneratedCommand()" />
+          </div>
+        </div>
+
+        <!-- Protocols & Ports Grid -->
+        <div class="gen-grid">
+          <div class="gen-field">
+            <div class="gen-label" style="display: flex; justify-content: space-between;">
+              <span>Protocols</span>
+              <span style="font-size: 10px; color: var(--cyan); cursor: pointer;" onclick="selectAllProtocols()">Select All</span>
+            </div>
+            <input class="gen-input" type="text" id="cgProtocols" placeholder="all or comma-separated list" value="all" oninput="syncProtoPillsFromInput(); updateGeneratedCommand();" />
+            <div class="gen-pills" id="cgProtoPills" style="margin-top: 4px;">
+              <div class="gen-pill" data-proto="http1" onclick="toggleProtoPill('http1')">HTTP/1.1</div>
+              <div class="gen-pill" data-proto="http2" onclick="toggleProtoPill('http2')">HTTP/2</div>
+              <div class="gen-pill" data-proto="http3" onclick="toggleProtoPill('http3')">HTTP/3 (QUIC)</div>
+              <div class="gen-pill" data-proto="websocket" onclick="toggleProtoPill('websocket')">WebSocket</div>
+              <div class="gen-pill" data-proto="grpc" onclick="toggleProtoPill('grpc')">gRPC</div>
+              <div class="gen-pill" data-proto="dns_a" onclick="toggleProtoPill('dns_a')">DNS A</div>
+              <div class="gen-pill" data-proto="dns_txt" onclick="toggleProtoPill('dns_txt')">DNS TXT</div>
+              <div class="gen-pill" data-proto="doh" onclick="toggleProtoPill('doh')">DoH</div>
+              <div class="gen-pill" data-proto="ftp" onclick="toggleProtoPill('ftp')">FTP</div>
+              <div class="gen-pill" data-proto="sftp" onclick="toggleProtoPill('sftp')">SFTP</div>
+              <div class="gen-pill" data-proto="smtp" onclick="toggleProtoPill('smtp')">SMTP</div>
+              <div class="gen-pill" data-proto="smb_file" onclick="toggleProtoPill('smb_file')">SMB File</div>
+              <div class="gen-pill" data-proto="smb_hash" onclick="toggleProtoPill('smb_hash')">SMB Hash</div>
+              <div class="gen-pill" data-proto="smb_quic" onclick="toggleProtoPill('smb_quic')">SMB QUIC</div>
+              <div class="gen-pill" data-proto="icmp" onclick="toggleProtoPill('icmp')">ICMP</div>
+              <div class="gen-pill" data-proto="ntp" onclick="toggleProtoPill('ntp')">NTP</div>
+              <div class="gen-pill" data-proto="syslog" onclick="toggleProtoPill('syslog')">Syslog</div>
+              <div class="gen-pill" data-proto="mqtt" onclick="toggleProtoPill('mqtt')">MQTT</div>
+            </div>
+          </div>
+          <div class="gen-field">
+            <div class="gen-label">Egress Ports</div>
+            <input class="gen-input" type="text" id="cgPorts" placeholder="quick, standard, full, or 80,443" value="quick" oninput="updateGeneratedCommand()" />
+            <div class="gen-pills" style="margin-top: 4px;">
+              <div class="gen-pill" onclick="setCgPort('quick')">Quick (25 Ports)</div>
+              <div class="gen-pill" onclick="setCgPort('80,443')">Web (80, 443)</div>
+              <div class="gen-pill" onclick="setCgPort('80,443,445,4430,50051')">RPC &amp; Enterprise</div>
+              <div class="gen-pill" onclick="setCgPort('full')">Full Spectrum</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Volume, Rate Limit & Pacing -->
+        <div class="gen-grid">
+          <div class="gen-field">
+            <div class="gen-label">Data Volume &amp; Throughput Rate</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <select class="gen-select" id="cgSize" onchange="updateGeneratedCommand()">
+                <option value="100KB">100 KB</option>
+                <option value="1MB" selected>1 MB</option>
+                <option value="2MB">2 MB</option>
+                <option value="5MB">5 MB</option>
+                <option value="10MB">10 MB</option>
+                <option value="50MB">50 MB</option>
+                <option value="1GB">1 GB</option>
+              </select>
+              <select class="gen-select" id="cgThroughput" onchange="updateGeneratedCommand()">
+                <option value="unlimited" selected>Unlimited Throughput</option>
+                <option value="100KB/s">100 KB/s</option>
+                <option value="500KB/s">500 KB/s</option>
+                <option value="1MB/s">1 MB/s (1000 KB/s)</option>
+                <option value="2MB/s">2 MB/s</option>
+                <option value="5MB/s">5 MB/s</option>
+              </select>
+            </div>
+          </div>
+          <div class="gen-field">
+            <div class="gen-label">Pacing Cadence &amp; Concurrency</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <select class="gen-select" id="cgCadence" onchange="updateGeneratedCommand()">
+                <option value="steady" selected>Steady (Default)</option>
+                <option value="burst">Burst (Intermittent)</option>
+                <option value="jittered">Jittered (Random Interval)</option>
+                <option value="low-and-slow">Low &amp; Slow Stealth</option>
+                <option value="office-hours">Office Hours Emulation</option>
+              </select>
+              <select class="gen-select" id="cgConcurrency" onchange="updateGeneratedCommand()">
+                <option value="10">Concurrency: 10</option>
+                <option value="50">Concurrency: 50</option>
+                <option value="100" selected>Concurrency: 100</option>
+                <option value="200">Concurrency: 200</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- DLP & Evasion Options -->
+        <div class="gen-grid">
+          <div class="gen-field">
+            <div class="gen-label">Synthetic DLP &amp; Carrier Format</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <select class="gen-select" id="cgDLP" onchange="updateGeneratedCommand()">
+                <option value="all" selected>All DLP Secrets</option>
+                <option value="pci">PCI Cardholder Data</option>
+                <option value="hipaa">HIPAA ePHI Records</option>
+                <option value="pii">PII Identities</option>
+                <option value="secrets">Cloud Secrets &amp; Keys</option>
+              </select>
+              <select class="gen-select" id="cgCarrier" onchange="updateGeneratedCommand()">
+                <option value="csv" selected>CSV Spreadsheet</option>
+                <option value="json">JSON API Stream</option>
+                <option value="sql">SQL Dump Carrier</option>
+                <option value="email">RFC 822 Email Body</option>
+                <option value="syslog">Syslog Message</option>
+              </select>
+            </div>
+          </div>
+          <div class="gen-field">
+            <div class="gen-label">Steganography &amp; Evasion Chain</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <select class="gen-select" id="cgStego" onchange="updateGeneratedCommand()">
+                <option value="none" selected>Stego: None</option>
+                <option value="png">PNG Pixel LSB</option>
+                <option value="bmp">BMP Raw Carrier</option>
+                <option value="wav">WAV Audio Frequency</option>
+                <option value="jpeg-zip">Polyglot JPEG-ZIP</option>
+                <option value="pdf-jar">Polyglot PDF-JAR</option>
+              </select>
+              <select class="gen-select" id="cgTransforms" onchange="updateGeneratedCommand()">
+                <option value="raw" selected>Raw (Unmodified)</option>
+                <option value="base64">Base64 Encoded</option>
+                <option value="hex">Hex Encoded</option>
+                <option value="gzip">Gzip Compressed</option>
+                <option value="zstd">Zstandard Compressed</option>
+                <option value="aes_gcm">AES-256-GCM Encrypted</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Traversal & Reporting Checkboxes -->
+        <div class="gen-checkbox-row">
+          <label class="gen-checkbox-label">
+            <input type="checkbox" id="cgSyncReport" checked onchange="updateGeneratedCommand()" />
+            <span>Sync Telemetry &amp; Report to Live Dashboard (<code style="color: var(--cyan);">--sync-report</code>)</span>
+          </label>
+          <label class="gen-checkbox-label">
+            <input type="checkbox" id="cgOutputHTML" checked onchange="updateGeneratedCommand()" />
+            <span>Generate Standalone HTML Report</span>
+          </label>
+          <label class="gen-checkbox-label">
+            <input type="checkbox" id="cgOutputJSON" onchange="updateGeneratedCommand()" />
+            <span>Export Machine-Readable JSON</span>
+          </label>
+          <label class="gen-checkbox-label">
+            <input type="checkbox" id="cgSavePayload" onchange="updateGeneratedCommand()" />
+            <span>Retain Payload on Client Disk</span>
+          </label>
+        </div>
+
+        <!-- Live Generated Command Box -->
+        <div class="gen-cmd-box">
+          <div class="gen-cmd-head">
+            <span>GENERATED CLIENT COMMAND LINE</span>
+            <button class="nav-btn btn-cyan" id="cgCopyBtn" onclick="copyGeneratedCommand()">📋 COPY COMMAND</button>
+          </div>
+          <div class="gen-cmd-text" id="cgCmdText"></div>
+        </div>
+
+        <!-- Companion Real-Time Inspection Helper -->
+        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; display: flex; justify-content: space-between;">
+            <span>Real-Time Packet Inspection Companion (Wireshark / Tshark)</span>
+            <span style="cursor: pointer; color: var(--cyan);" onclick="copyTsharkCommand()">Copy Tshark</span>
+          </div>
+          <div style="font-family: var(--mono-font); font-size: 11px; color: var(--text-dim);" id="cgTsharkText">
+            tshark -i any -f "udp port 443 or tcp port 80 or tcp port 443" -Y "quic or websocket or http"
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="nav-btn" onclick="closeCmdGenModal()">CLOSE</button>
+        <button class="nav-btn btn-cyan" onclick="copyGeneratedCommand()">COPY CLI COMMAND</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Max values for radial dial scales
+    const MAX_THROUGHPUT = 100.0; // 100 MB/s
+    const MAX_CONCURRENCY = 32.0;
+
+    const CIRCUMFERENCE = 408.4; // 2 * PI * 65
+
+    let lastActiveSessions = [];
+    let lastRecentSessions = [];
+
+    function setDialProgress(elementId, value, maxVal) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      const pct = Math.min(1.0, Math.max(0.0, value / maxVal));
+      const offset = CIRCUMFERENCE - (pct * CIRCUMFERENCE);
+      el.style.strokeDasharray = CIRCUMFERENCE;
+      el.style.strokeDashoffset = offset;
+    }
+
+    function updateEEIColor(score) {
+      const card = document.getElementById('cardEEI');
+      const dialProg = document.getElementById('dialEEIProg');
+      let strokeColor = 'var(--green)';
+      let shadowColor = 'var(--green-glow)';
+
+      if (score > 80) {
+        strokeColor = 'var(--crimson)';
+        shadowColor = 'var(--crimson-glow)';
+      } else if (score > 50) {
+        strokeColor = 'var(--amber)';
+        shadowColor = 'var(--amber-glow)';
+      } else if (score > 20) {
+        strokeColor = 'var(--blue)';
+        shadowColor = 'var(--blue-glow)';
+      }
+
+      if (dialProg) {
+        dialProg.style.stroke = strokeColor;
+        dialProg.style.filter = `drop-shadow(0 0 8px ${shadowColor})`;
+      }
+    }
+
+    function renderActiveStreams(activeStreams, recentStreams) {
+      const feed = document.getElementById('activeStreamsFeed');
+      const badge = document.getElementById('activeStreamsBadge');
+      if (!feed || !badge) return;
+
+      const activeList = activeStreams || [];
+      const recentList = recentStreams || [];
+
+      if (activeList.length > 0) {
+        badge.textContent = `${activeList.length} Active // ${recentList.length} Logged`;
+      } else {
+        badge.textContent = recentList.length > 0 ? `${recentList.length} Logged (Standby)` : '0 Active';
+      }
+
+      if (activeList.length === 0 && recentList.length === 0) {
+        feed.innerHTML = '<div class="empty-state">No active or recorded exfiltration streams. Standby for client triggers...</div>';
+        return;
+      }
+
+      let html = '';
+
+      // 1. Render Active in-flight streams at the top
+      activeList.forEach(s => {
+        const zone = s.network_zone || 'DEFAULT';
+        const host = s.client_host || s.client_ip || 'Remote Host';
+        const proto = s.protocol || 'STREAM';
+        const rate = (s.instant_mbs || 0).toFixed(2);
+        const pct = (s.progress_pct || 0).toFixed(1);
+        const transferred = formatBytes(s.bytes_transferred || 0);
+        const total = formatBytes(s.total_bytes || 0);
+        const seq = s.sequence || 0;
+        const totalChunks = s.total_chunks || 0;
+
+        html += `
+          <div class="stream-row stream-row-active" id="stream-${escapeHtml(s.session_id)}">
+            <div class="host-info" title="${escapeHtml(host)}">${escapeHtml(host)}</div>
+            <div><span class="zone-pill" title="${escapeHtml(zone)}">${escapeHtml(zone)}</span></div>
+            <div><span class="proto-pill">${escapeHtml(proto)}</span></div>
+            <div class="progress-bar-container">
+              <div class="progress-track">
+                <div class="progress-fill" style="width: ${pct}%;"></div>
+              </div>
+              <div class="progress-labels">
+                <span>Chunk ${seq}/${totalChunks} (${transferred} / ${total})</span>
+                <span>${pct}%</span>
+              </div>
+            </div>
+            <div class="rate-val">${rate} MB/s</div>
+            <div><span class="status-badge status-streaming">STREAMING</span></div>
+          </div>
+        `;
+      });
+
+      // 2. Render Recent completed/blocked sessions directly below (up to 12 recent sessions)
+      const displayedRecent = recentList.slice(0, 12);
+      displayedRecent.forEach(s => {
+        const zone = s.network_zone || 'DEFAULT';
+        const host = s.client_host || s.client_ip || 'Remote Host';
+        const proto = s.protocol || 'STREAM';
+        const rate = (s.average_mbs || 0).toFixed(2);
+        const total = formatBytes(s.total_bytes || 0);
+        const durationSec = (s.duration_ms ? s.duration_ms / 1000 : 0).toFixed(1);
+        const shortId = (s.session_id && s.session_id.length > 8) ? s.session_id.substring(0, 8) : (s.session_id || 'sess');
+        const verdict = s.verdict || 'EXFIL_SUCCESS';
+        const isBlocked = verdict.indexOf('BLOCKED') !== -1;
+        const statusClass = isBlocked ? 'status-blocked' : 'status-success';
+        const fillClass = isBlocked ? 'fill-blocked' : 'fill-success';
+
+        html += `
+          <div class="stream-row stream-row-recent">
+            <div class="host-info" title="${escapeHtml(host)}">${escapeHtml(host)}</div>
+            <div><span class="zone-pill" title="${escapeHtml(zone)}">${escapeHtml(zone)}</span></div>
+            <div><span class="proto-pill">${escapeHtml(proto)}</span></div>
+            <div class="progress-bar-container">
+              <div class="progress-track">
+                <div class="progress-fill ${fillClass}" style="width: 100%;"></div>
+              </div>
+              <div class="progress-labels">
+                <span>Session ${shortId} (${total} in ${durationSec}s · ${s.total_chunks || 0} chunks)</span>
+                <span>100%</span>
+              </div>
+            </div>
+            <div class="rate-val" style="color: ${isBlocked ? 'var(--crimson)' : 'var(--green)'};">${rate} MB/s</div>
+            <div><span class="status-badge ${statusClass}">${escapeHtml(verdict)}</span></div>
+          </div>
+        `;
+      });
+
+      feed.innerHTML = html;
+    }
+
+    function updateStreamRowInPlace(row, s) {
+      if (!row || !s) return;
+      const rate = (s.instant_mbs || 0).toFixed(2);
+      const pct = (s.progress_pct || 0).toFixed(1);
+      const transferred = formatBytes(s.bytes_transferred || 0);
+      const total = formatBytes(s.total_bytes || 0);
+      const seq = s.sequence || 0;
+      const totalChunks = s.total_chunks || 0;
+
+      const fill = row.querySelector('.progress-fill');
+      if (fill) fill.style.width = `${pct}%`;
+
+      const labels = row.querySelector('.progress-labels');
+      if (labels) {
+        labels.innerHTML = `<span>Chunk ${seq}/${totalChunks} (${transferred} / ${total})</span><span>${pct}%</span>`;
+      }
+
+      const rateEl = row.querySelector('.rate-val');
+      if (rateEl) rateEl.textContent = `${rate} MB/s`;
+    }
+
+    function renderProtocols(protocols) {
+      const grid = document.getElementById('protocolGrid');
+      if (!grid) return;
+
+      let html = '';
+      Object.keys(protocols).sort().forEach(p => {
+        const ps = protocols[p];
+        const status = ps.status || 'ready';
+        let beaconClass = 'beacon-ready';
+        let cardClass = '';
+
+        if (status === 'streaming') {
+          beaconClass = 'beacon-streaming';
+          cardClass = 'active-stream';
+        } else if (status === 'blocked') {
+          beaconClass = 'beacon-blocked';
+          cardClass = 'blocked-state';
+        }
+
+        html += `
+          <div class="proto-card ${cardClass}" id="proto-card-${p}">
+            <div class="proto-header">
+              <span class="proto-name">${p}</span>
+              <div class="proto-beacon ${beaconClass}" id="proto-beacon-${p}"></div>
+            </div>
+            <div class="proto-vol" id="proto-vol-${p}">${ps.bytes_formatted || '0 B'}</div>
+          </div>
+        `;
+      });
+      grid.innerHTML = html;
+    }
+
+    function renderPorts(ports) {
+      const grid = document.getElementById('portsGrid');
+      if (!grid || !ports) return;
+
+      let html = '';
+      ports.forEach(p => {
+        const status = p.status || 'listening';
+        let beaconClass = 'beacon-listening';
+        let cardClass = 'status-listening';
+
+        if (status === 'receiving') {
+          beaconClass = 'beacon-receiving';
+          cardClass = 'status-receiving';
+        } else if (status === 'reflection') {
+          beaconClass = 'beacon-reflection';
+          cardClass = 'status-reflection';
+        } else if (status === 'blocked') {
+          beaconClass = 'beacon-port-blocked';
+          cardClass = 'status-blocked';
+        } else if (status === 'idle') {
+          beaconClass = 'beacon-idle';
+          cardClass = '';
+        }
+
+        html += `
+          <div class="port-card ${cardClass}" id="port-card-${p.port}">
+            <div class="port-header">
+              <span class="port-num">:${p.port}</span>
+              <div class="port-beacon ${beaconClass}" id="port-beacon-${p.port}" title="${status.toUpperCase()}"></div>
+            </div>
+            <div class="port-meta">
+              <span>${p.service || p.protocol}</span>
+              <span id="port-status-${p.port}" style="color: ${status === 'reflection' ? 'var(--amber)' : (status === 'receiving' ? 'var(--cyan)' : (status === 'blocked' ? 'var(--crimson)' : 'var(--emerald)'))}; font-weight:700;">${status.toUpperCase()}</span>
+            </div>
+            <div class="port-meta" style="font-size: 9px; opacity: 0.8;">
+              <span>${p.protocol}</span>
+              <span id="port-bytes-${p.port}">${formatBytes(p.bytes_recv || 0)}</span>
+            </div>
+          </div>
+        `;
+      });
+      grid.innerHTML = html;
+    }
+
+    let allLogs = [];
+    let currentLogFilter = 'ALL';
+    let isAutoScroll = true;
+    let isAutoScrollUserPref = true;
+    let isLogNowrap = false;
+    let isLogExpanded = false;
+
+    function createLogElement(entry) {
+      const line = document.createElement('div');
+      line.className = 'log-line';
+
+      const time = entry.timestamp || '00:00:00.000';
+      const lvl = entry.level || 'INFO';
+      const zone = entry.zone ? `[${entry.zone}]` : '';
+      let msg = entry.message || '';
+      let proto = entry.protocol ? entry.protocol.toUpperCase() : '';
+
+      // If message begins with [protocol], strip it so we don't duplicate badge
+      if (entry.protocol && msg.toLowerCase().startsWith('[' + entry.protocol.toLowerCase() + ']')) {
+        msg = msg.substring(entry.protocol.length + 2).trim();
+      }
+
+      line.innerHTML = `
+        <span class="log-time">[${time}]</span>
+        <span class="log-lvl lvl-${lvl}">[${lvl}]</span>
+        ${zone ? `<span class="log-zone">${escapeHtml(zone)}</span>` : ''}
+        ${proto ? `<span class="log-proto">[${escapeHtml(proto)}]</span>` : ''}
+        <span class="log-msg">${escapeHtml(msg)}</span>
+      `;
+      return line;
+    }
+
+    const seenLogKeys = new Set();
+
+    function getLogKey(entry) {
+      if (!entry) return '';
+      if (entry.id) return entry.id;
+      return `${entry.level || ''}_${entry.protocol || ''}_${entry.message || ''}`;
+    }
+
+    function addLogToTerminal(entry) {
+      if (!entry) return;
+      const key = getLogKey(entry);
+      if (key && seenLogKeys.has(key)) return;
+      if (key) seenLogKeys.add(key);
+
+      allLogs.push(entry);
+      if (allLogs.length > 500) {
+        const removed = allLogs.shift();
+        if (removed) {
+          const remKey = getLogKey(removed);
+          if (remKey) seenLogKeys.delete(remKey);
+        }
+      }
+      updateLogBadge();
+
+      if (currentLogFilter !== 'ALL' && entry.level !== currentLogFilter) {
+        return;
+      }
+
+      const term = document.getElementById('terminalLogs');
+      if (!term) return;
+
+      const el = createLogElement(entry);
+      term.appendChild(el);
+
+      if (isAutoScroll) {
+        term.scrollTop = term.scrollHeight;
+      }
+    }
+
+    function renderLogs() {
+      const term = document.getElementById('terminalLogs');
+      if (!term) return;
+      term.innerHTML = '';
+
+      const filtered = currentLogFilter === 'ALL'
+        ? allLogs
+        : allLogs.filter(e => e.level === currentLogFilter);
+
+      filtered.forEach(entry => {
+        term.appendChild(createLogElement(entry));
+      });
+
+      if (isAutoScroll) {
+        term.scrollTop = term.scrollHeight;
+      }
+    }
+
+    function updateLogBadge() {
+      const badge = document.getElementById('logCountBadge');
+      if (badge) {
+        badge.textContent = `${allLogs.length} Events`;
+      }
+    }
+
+    function setLogFilter(filter) {
+      currentLogFilter = filter;
+      document.querySelectorAll('#logFilterGroup .filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.id === `filterBtn${filter}`);
+      });
+      renderLogs();
+    }
+
+    function toggleAutoScroll(enabled) {
+      isAutoScroll = enabled;
+      isAutoScrollUserPref = enabled;
+      if (enabled) {
+        const term = document.getElementById('terminalLogs');
+        if (term) term.scrollTop = term.scrollHeight;
+      }
+    }
+
+    let isLogWide = false;
+    let isLogFullscreen = false;
+
+    function toggleLogWrap() {
+      isLogNowrap = !isLogNowrap;
+      const term = document.getElementById('terminalLogs');
+      const btn = document.getElementById('wrapToggleBtn');
+      if (term) term.classList.toggle('nowrap', isLogNowrap);
+      if (btn) btn.textContent = isLogNowrap ? 'WRAP' : 'NOWRAP';
+    }
+
+    function toggleLogWide() {
+      isLogWide = !isLogWide;
+      const section = document.getElementById('liveEventStreamSection');
+      const btn = document.getElementById('wideToggleBtn');
+      if (section) section.classList.toggle('full-bleed', isLogWide);
+      if (btn) btn.textContent = isLogWide ? '↔ DEFAULT' : '↔ WIDE';
+    }
+
+    function toggleLogExpand() {
+      isLogExpanded = !isLogExpanded;
+      const card = document.getElementById('terminalCard');
+      const btn = document.getElementById('expandToggleBtn');
+      if (card) card.classList.toggle('expanded', isLogExpanded);
+      if (btn) btn.textContent = isLogExpanded ? '↕ COMPACT' : '↕ TALL';
+    }
+
+    function toggleLogFullscreen() {
+      isLogFullscreen = !isLogFullscreen;
+      const card = document.getElementById('terminalCard');
+      const btn = document.getElementById('fullscreenToggleBtn');
+      document.body.classList.toggle('terminal-fullscreen-active', isLogFullscreen);
+      if (card) card.classList.toggle('fullscreen', isLogFullscreen);
+      if (btn) btn.textContent = isLogFullscreen ? '✕ RESTORE' : '⛶ MAXIMIZE';
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isLogFullscreen) {
+        toggleLogFullscreen();
+      }
+    });
+
+    function clearLogs() {
+      allLogs = [];
+      seenLogKeys.clear();
+      const term = document.getElementById('terminalLogs');
+      if (term) term.innerHTML = '';
+      updateLogBadge();
+    }
+
+    function initTerminalScrollListener() {
+      const term = document.getElementById('terminalLogs');
+      if (!term) return;
+      term.addEventListener('scroll', () => {
+        const isNearBottom = term.scrollHeight - term.scrollTop - term.clientHeight < 40;
+        const toggle = document.getElementById('autoScrollToggle');
+        if (!isNearBottom && isAutoScroll) {
+          isAutoScroll = false;
+          if (toggle) toggle.checked = false;
+        } else if (isNearBottom && !isAutoScroll && isAutoScrollUserPref) {
+          isAutoScroll = true;
+          if (toggle) toggle.checked = true;
+        }
+      });
+    }
+
+    function renderReports(reports) {
+      const tbody = document.getElementById('reportsTableBody');
+      const badge = document.getElementById('reportsCountBadge');
+      if (!tbody || !badge) return;
+
+      badge.textContent = `${reports.length} Stored`;
+
+      if (reports.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 24px;">No client reports synchronized yet. Run client with <code>--sync-report &lt;dashboard-url&gt;</code> to upload findings.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      let html = '';
+      reports.forEach(r => {
+        const id = r.report_id;
+        const shortId = id.length > 8 ? id.substring(0, 8) : id;
+        const eei = (r.eei_score || 0).toFixed(2);
+        const host = r.client_host || r.client_ip || 'Remote Host';
+        const zone = r.network_zone || 'DEFAULT';
+
+        html += `
+          <tr>
+            <td style="font-family: var(--mono-font); font-weight: 700; color: var(--cyan);">${shortId}</td>
+            <td style="font-family: var(--mono-font);">${escapeHtml(r.target_host)}</td>
+            <td><span class="zone-pill">${escapeHtml(zone)}</span></td>
+            <td style="font-family: var(--mono-font);">${escapeHtml(host)}</td>
+            <td style="font-family: var(--mono-font); font-weight: 700; color: ${r.eei_score > 50 ? 'var(--crimson)' : 'var(--green)'};">${eei}% (${r.posture || 'Normal'})</td>
+            <td style="font-family: var(--mono-font);">${r.total_probes} (${r.success_count} pass / ${r.blocked_l4 + r.blocked_l7 + r.blocked_dlp} blocked)</td>
+            <td style="font-family: var(--mono-font); color: var(--text-dim);">${r.uploaded_at ? r.uploaded_at.substring(11, 19) : ''}</td>
+            <td>
+              <div class="report-actions">
+                <a href="#" class="action-link" onclick="openReportModal('${id}')">VIEW HTML</a>
+                <a href="/api/v1/reports/${id}/json" target="_blank" class="action-link">JSON</a>
+                <a href="/api/v1/reports/${id}/sarif" target="_blank" class="action-link">SARIF</a>
+                <a href="/api/v1/reports/${id}/remediation" target="_blank" class="action-link">RULES</a>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function openReportModal(reportId) {
+      const modal = document.getElementById('reportModal');
+      const iframe = document.getElementById('reportIframe');
+      const title = document.getElementById('modalReportTitle');
+      if (!modal || !iframe) return;
+
+      title.textContent = `ASSESSMENT REPORT: ${reportId}`;
+      iframe.src = `/api/v1/reports/${reportId}/html`;
+      modal.style.display = 'flex';
+    }
+
+    function closeReportModal() {
+      const modal = document.getElementById('reportModal');
+      const iframe = document.getElementById('reportIframe');
+      if (modal) modal.style.display = 'none';
+      if (iframe) iframe.src = '';
+    }
+
+    function scrollToReports() {
+      const el = document.getElementById('reportsSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function openResetModal() {
+      const modal = document.getElementById('resetModal');
+      const fb = document.getElementById('resetFeedback');
+      const chk = document.getElementById('resetDeleteFiles');
+      const btn = document.getElementById('confirmResetBtn');
+      if (fb) fb.innerHTML = '';
+      if (chk) chk.checked = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'CONFIRM RESET';
+      }
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeResetModal(e) {
+      if (e && e.target && e.target.id !== 'resetModal') return;
+      const modal = document.getElementById('resetModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    // Client CLI Command Generator Modal functions
+    function openCmdGenModal() {
+      const modal = document.getElementById('cmdGenModal');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      const srv = document.getElementById('cgServer');
+      if (srv && (srv.value === '127.0.0.1' || !srv.value)) {
+        const h = window.location.hostname;
+        if (h && h !== 'localhost' && h !== '127.0.0.1') {
+          srv.value = h;
+        }
+      }
+      syncProtoPillsFromInput();
+      updateGeneratedCommand();
+    }
+
+    function closeCmdGenModal(e) {
+      if (e && e.target && e.target.id !== 'cmdGenModal') return;
+      const modal = document.getElementById('cmdGenModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function setCgPort(val) {
+      const el = document.getElementById('cgPorts');
+      if (el) {
+        el.value = val;
+        updateGeneratedCommand();
+      }
+    }
+
+    function selectAllProtocols() {
+      const el = document.getElementById('cgProtocols');
+      if (el) {
+        el.value = 'all';
+        syncProtoPillsFromInput();
+        updateGeneratedCommand();
+      }
+    }
+
+    function toggleProtoPill(proto) {
+      const el = document.getElementById('cgProtocols');
+      if (!el) return;
+      let curr = el.value.trim().toLowerCase();
+      if (curr === 'all') {
+        el.value = proto;
+      } else {
+        let parts = curr.split(',').map(s => s.trim()).filter(Boolean);
+        const idx = parts.indexOf(proto);
+        if (idx >= 0) {
+          parts.splice(idx, 1);
+        } else {
+          parts.push(proto);
+        }
+        el.value = parts.length > 0 ? parts.join(',') : 'all';
+      }
+      syncProtoPillsFromInput();
+      updateGeneratedCommand();
+    }
+
+    function syncProtoPillsFromInput() {
+      const el = document.getElementById('cgProtocols');
+      if (!el) return;
+      const curr = el.value.trim().toLowerCase();
+      const parts = curr === 'all' ? ['all'] : curr.split(',').map(s => s.trim());
+      document.querySelectorAll('#cgProtoPills .gen-pill').forEach(pill => {
+        const p = pill.getAttribute('data-proto');
+        if (curr === 'all' || parts.includes(p)) {
+          pill.classList.add('active');
+        } else {
+          pill.classList.remove('active');
+        }
+      });
+    }
+
+    function applyCgPreset(preset) {
+      document.querySelectorAll('#cgPresets .gen-pill').forEach(p => p.classList.remove('active'));
+      if (window.event && window.event.target) {
+        window.event.target.classList.add('active');
+      }
+
+      const protoEl = document.getElementById('cgProtocols');
+      const portsEl = document.getElementById('cgPorts');
+      const sizeEl = document.getElementById('cgSize');
+      const rateEl = document.getElementById('cgThroughput');
+      const cadenceEl = document.getElementById('cgCadence');
+      const dlpEl = document.getElementById('cgDLP');
+      const carrierEl = document.getElementById('cgCarrier');
+      const stegoEl = document.getElementById('cgStego');
+      const transformsEl = document.getElementById('cgTransforms');
+
+      if (preset === 'full') {
+        if (protoEl) protoEl.value = 'all';
+        if (portsEl) portsEl.value = 'quick';
+        if (sizeEl) sizeEl.value = '1MB';
+        if (rateEl) rateEl.value = 'unlimited';
+        if (cadenceEl) cadenceEl.value = 'steady';
+        if (dlpEl) dlpEl.value = 'all';
+        if (carrierEl) carrierEl.value = 'csv';
+        if (stegoEl) stegoEl.value = 'none';
+        if (transformsEl) transformsEl.value = 'raw';
+      } else if (preset === 'quic-ws') {
+        if (protoEl) protoEl.value = 'http3,websocket';
+        if (portsEl) portsEl.value = '443,80';
+        if (sizeEl) sizeEl.value = '2MB';
+        if (rateEl) rateEl.value = '1MB/s';
+        if (cadenceEl) cadenceEl.value = 'steady';
+        if (dlpEl) dlpEl.value = 'pci';
+        if (carrierEl) carrierEl.value = 'csv';
+      } else if (preset === 'stealth') {
+        if (protoEl) protoEl.value = 'dns_a,dns_txt,doh,icmp,ntp';
+        if (portsEl) portsEl.value = '53,853,443';
+        if (sizeEl) sizeEl.value = '100KB';
+        if (rateEl) rateEl.value = '100KB/s';
+        if (cadenceEl) cadenceEl.value = 'jittered';
+        if (dlpEl) dlpEl.value = 'secrets';
+        if (transformsEl) transformsEl.value = 'base64';
+      } else if (preset === 'proxy') {
+        if (protoEl) protoEl.value = 'http1,webdav';
+        if (portsEl) portsEl.value = '80,8080';
+        if (sizeEl) sizeEl.value = '500KB';
+        if (cadenceEl) cadenceEl.value = 'steady';
+      } else if (preset === 'smb') {
+        if (protoEl) protoEl.value = 'smb_file,smb_hash,smb_quic';
+        if (portsEl) portsEl.value = '445,4430';
+        if (sizeEl) sizeEl.value = '1MB';
+      } else if (preset === 'dlp') {
+        if (protoEl) protoEl.value = 'http2,http3,websocket';
+        if (portsEl) portsEl.value = '443';
+        if (sizeEl) sizeEl.value = '5MB';
+        if (dlpEl) dlpEl.value = 'pci';
+        if (carrierEl) carrierEl.value = 'json';
+      }
+
+      syncProtoPillsFromInput();
+      updateGeneratedCommand();
+    }
+
+    function updateGeneratedCommand() {
+      const platform = (document.getElementById('cgPlatform') || {}).value || './bin/contraband client';
+      const server = ((document.getElementById('cgServer') || {}).value || '127.0.0.1').trim();
+      const protos = ((document.getElementById('cgProtocols') || {}).value || 'all').trim();
+      const ports = ((document.getElementById('cgPorts') || {}).value || 'quick').trim();
+      const size = (document.getElementById('cgSize') || {}).value || '1MB';
+      const throughput = (document.getElementById('cgThroughput') || {}).value || 'unlimited';
+      const cadence = (document.getElementById('cgCadence') || {}).value || 'steady';
+      const concurrency = (document.getElementById('cgConcurrency') || {}).value || '100';
+      const dlp = (document.getElementById('cgDLP') || {}).value || 'all';
+      const carrier = (document.getElementById('cgCarrier') || {}).value || 'csv';
+      const stego = (document.getElementById('cgStego') || {}).value || 'none';
+      const transforms = (document.getElementById('cgTransforms') || {}).value || 'raw';
+
+      const syncReport = (document.getElementById('cgSyncReport') || {}).checked;
+      const outHTML = (document.getElementById('cgOutputHTML') || {}).checked;
+      const outJSON = (document.getElementById('cgOutputJSON') || {}).checked;
+      const savePayload = (document.getElementById('cgSavePayload') || {}).checked;
+
+      let cmd = `${platform} --server ${server}`;
+
+      if (ports && ports !== 'quick') {
+        cmd += ` --ports ${ports}`;
+      } else {
+        cmd += ` --ports quick`;
+      }
+
+      if (protos && protos !== 'all') {
+        cmd += ` --protocols ${protos}`;
+      }
+
+      if (size && size !== '1MB') {
+        cmd += ` --size ${size}`;
+      }
+
+      if (throughput && throughput !== 'unlimited') {
+        cmd += ` --throughput ${throughput}`;
+      }
+
+      if (cadence && cadence !== 'steady') {
+        cmd += ` --cadence ${cadence}`;
+      }
+
+      if (concurrency && concurrency !== '100') {
+        cmd += ` --concurrency ${concurrency}`;
+      }
+
+      if (dlp && dlp !== 'all') {
+        cmd += ` --dlp ${dlp}`;
+      }
+
+      if (carrier && carrier !== 'csv') {
+        cmd += ` --carrier-type ${carrier}`;
+      }
+
+      if (stego && stego !== 'none') {
+        cmd += ` --stego ${stego}`;
+      }
+
+      if (transforms && transforms !== 'raw') {
+        cmd += ` --transforms ${transforms}`;
+      }
+
+      if (syncReport) {
+        const port = window.location.port ? window.location.port : '8080';
+        cmd += ` --sync-report http://${server}:${port}`;
+      }
+
+      if (outHTML) {
+        cmd += ` --output-html evidence/assessment.html`;
+      }
+
+      if (outJSON) {
+        cmd += ` --output-json evidence/assessment.json`;
+      }
+
+      if (savePayload) {
+        cmd += ` --save-payload`;
+      }
+
+      const outEl = document.getElementById('cgCmdText');
+      if (outEl) outEl.textContent = cmd;
+
+      // Update companion tshark helper
+      const tsharkEl = document.getElementById('cgTsharkText');
+      if (tsharkEl) {
+        let portFilter = "port 80 or port 443";
+        if (protos.includes('dns')) portFilter += " or port 53 or port 853";
+        if (protos.includes('smb')) portFilter += " or port 445 or port 4430";
+        if (protos.includes('grpc')) portFilter += " or port 50051";
+        tsharkEl.textContent = `tshark -i any -f "${portFilter}" -Y "quic or websocket or http or dns or smb2"`;
+      }
+    }
+
+    function copyGeneratedCommand() {
+      const text = (document.getElementById('cgCmdText') || {}).textContent || '';
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('cgCopyBtn');
+        if (btn) {
+          const orig = btn.textContent;
+          btn.textContent = 'COPIED! ✓';
+          btn.style.color = 'var(--green)';
+          btn.style.borderColor = 'var(--green)';
+          setTimeout(() => {
+            btn.textContent = orig;
+            btn.style.color = '';
+            btn.style.borderColor = '';
+          }, 1600);
+        }
+      });
+    }
+
+    function copyTsharkCommand() {
+      const text = (document.getElementById('cgTsharkText') || {}).textContent || '';
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = document.querySelector('#cgTsharkText').style.color;
+        document.querySelector('#cgTsharkText').style.color = 'var(--green)';
+        setTimeout(() => {
+          document.querySelector('#cgTsharkText').style.color = orig;
+        }, 1200);
+      });
+    }
+
+    function executeReset() {
+      const chk = document.getElementById('resetDeleteFiles');
+      const deleteFiles = chk ? chk.checked : false;
+      const fb = document.getElementById('resetFeedback');
+      const btn = document.getElementById('confirmResetBtn');
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'RESETTING...';
+      }
+      if (fb) {
+        fb.style.color = 'var(--cyan)';
+        fb.textContent = 'Executing telemetry reset...';
+      }
+
+      fetch('/api/v1/live/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ delete_files: deleteFiles })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Reset request failed: HTTP ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        if (fb) {
+          fb.style.color = 'var(--green)';
+          fb.textContent = data.message || 'Dashboard state reset successfully.';
+        }
+        setTimeout(() => {
+          closeResetModal();
+        }, 800);
+      })
+      .catch(err => {
+        if (fb) {
+          fb.style.color = 'var(--crimson)';
+          fb.textContent = 'Reset error: ' + err.message;
+        }
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'CONFIRM RESET';
+        }
+      });
+    }
+
+    function handleResetEvent(data) {
+      // 1. Reset radial dials
+      document.getElementById('dialThroughputVal').textContent = '0.00';
+      setDialProgress('dialThroughputProg', 0, MAX_THROUGHPUT);
+      document.getElementById('dialPeakThroughput').textContent = 'Peak: 0.00 MB/s';
+
+      document.getElementById('dialVolumeVal').textContent = '0 B';
+      setDialProgress('dialVolumeProg', 0, 1024 * 1024 * 1024);
+      document.getElementById('dialTotalChunks').textContent = '0 Chunks Assembled';
+
+      document.getElementById('dialEEIVal').textContent = '0%';
+      document.getElementById('dialEEIPosture').textContent = 'HARDENED';
+      setDialProgress('dialEEIProg', 0, 100.0);
+      updateEEIColor(0);
+
+      document.getElementById('dialConcVal').textContent = '0';
+      setDialProgress('dialConcProg', 0, MAX_CONCURRENCY);
+      document.getElementById('dialTotalSessions').textContent = '0 Total Sessions';
+
+      // 2. Clear Active & Recent Streams
+      lastActiveSessions = [];
+      lastRecentSessions = [];
+      renderActiveStreams([], []);
+
+      // 3. Clear logs
+      clearLogs();
+
+      // 4. Re-fetch metrics from server
+      fetchMetrics();
+    }
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      const units = ['KB', 'MB', 'GB', 'TB'];
+      let i = -1;
+      do {
+        bytes = bytes / 1024;
+        i++;
+      } while (bytes >= 1024 && i < units.length - 1);
+      return bytes.toFixed(2) + ' ' + units[i];
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    const PROTO_TO_PORT = {
+      'http_post': 80,
+      'http1': 80,
+      'http': 80,
+      'webdav': 80,
+      'websocket_binary': 80,
+      'websocket': 80,
+      'ws': 80,
+      'https_post': 443,
+      'http2': 443,
+      'https': 443,
+      'http3_quic': 443,
+      'http3': 443,
+      'quic': 443,
+      'aws_s3': 443,
+      'gcp_gcs': 443,
+      'azure_blob': 443,
+      'dns_a': 53,
+      'dns_txt': 53,
+      'ftp': 21,
+      'ftps': 990,
+      'sftp': 22,
+      'smtp': 25,
+      'smb_file': 445,
+      'smb_hash': 445,
+      'smb_quic': 4430,
+      'ntp_time': 123,
+      'syslog': 514,
+      'mqtt': 1883,
+      'grpc_protobuf': 50051,
+      'dns_over_tls': 853,
+      'dns_over_https': 8443
+    };
+
+    const portDecayTimers = {};
+    function setPortReceivingInPlace(port) {
+      const card = document.getElementById('port-card-' + port);
+      const beacon = document.getElementById('port-beacon-' + port);
+      const statusLabel = document.getElementById('port-status-' + port);
+      if (card && beacon && statusLabel) {
+        card.className = 'port-card status-receiving';
+        beacon.className = 'port-beacon beacon-receiving';
+        beacon.title = 'RECEIVING';
+        statusLabel.style.color = 'var(--cyan)';
+        statusLabel.textContent = 'RECEIVING';
+
+        if (portDecayTimers[port]) {
+          clearTimeout(portDecayTimers[port]);
+        }
+        portDecayTimers[port] = setTimeout(() => {
+          delete portDecayTimers[port];
+          card.className = 'port-card status-listening';
+          beacon.className = 'port-beacon beacon-listening';
+          beacon.title = 'LISTENING';
+          statusLabel.style.color = 'var(--emerald)';
+          statusLabel.textContent = 'LISTENING';
+        }, 3200);
+      }
+    }
+
+    const protoDecayTimers = {};
+    function setProtoStreamingInPlace(proto) {
+      const card = document.getElementById('proto-card-' + proto);
+      const beacon = document.getElementById('proto-beacon-' + proto);
+      if (card && beacon) {
+        card.className = 'proto-card active-stream';
+        beacon.className = 'proto-beacon beacon-streaming';
+
+        if (protoDecayTimers[proto]) {
+          clearTimeout(protoDecayTimers[proto]);
+        }
+        protoDecayTimers[proto] = setTimeout(() => {
+          delete protoDecayTimers[proto];
+          card.className = 'proto-card';
+          beacon.className = 'proto-beacon beacon-ready';
+        }, 3200);
+      }
+    }
+
+    let fetchMetricsTimer = null;
+    function scheduleFetchMetrics() {
+      if (!fetchMetricsTimer) {
+        fetchMetricsTimer = setTimeout(() => {
+          fetchMetricsTimer = null;
+          fetchMetrics();
+        }, 400);
+      }
+    }
+
+    // Connect Server-Sent Events (SSE)
+    function setupSSE() {
+      const evtSource = new EventSource('/api/v1/live/events');
+
+      evtSource.onopen = function() {
+        document.getElementById('connPulse').style.background = 'var(--green)';
+        document.getElementById('connPulse').style.boxShadow = '0 0 8px var(--green)';
+        document.getElementById('connText').textContent = 'STREAM CONNECTED';
+      };
+
+      evtSource.onerror = function() {
+        document.getElementById('connPulse').style.background = 'var(--crimson)';
+        document.getElementById('connPulse').style.boxShadow = '0 0 8px var(--crimson)';
+        document.getElementById('connText').textContent = 'RECONNECTING...';
+      };
+
+      function onSSEEvent(e) {
+        try {
+          const event = JSON.parse(e.data);
+          handleLiveEvent(event);
+        } catch (err) {
+          console.error("SSE parse error:", err);
+        }
+      }
+
+      evtSource.onmessage = onSSEEvent;
+      const eventTypes = [
+        'heartbeat', 'rate_tick', 'chunk_received', 'chunk_progress',
+        'session_complete', 'probe_received', 'report_uploaded', 'connection_open',
+        'dashboard_reset'
+      ];
+      eventTypes.forEach(type => {
+        evtSource.addEventListener(type, onSSEEvent);
+      });
+
+      // Periodic fallback polling every 3 seconds to guarantee freshness
+      setInterval(fetchMetrics, 3000);
+    }
+
+    function handleLiveEvent(evt) {
+      if (!evt) return;
+
+      if (evt.type === 'dashboard_reset') {
+        handleResetEvent(evt.data);
+        return;
+      }
+
+      if (evt.type === 'heartbeat' && evt.data) {
+        const state = evt.data;
+        updateDashboardState(state);
+      } else if (evt.type === 'rate_tick' && evt.data) {
+        const tick = evt.data;
+        if (tick.instant_throughput_mbs !== undefined) {
+          document.getElementById('dialThroughputVal').textContent = tick.instant_throughput_mbs.toFixed(2);
+          setDialProgress('dialThroughputProg', tick.instant_throughput_mbs, MAX_THROUGHPUT);
+        }
+        if (tick.active_streams !== undefined) {
+          document.getElementById('dialConcVal').textContent = tick.active_streams;
+          setDialProgress('dialConcProg', tick.active_streams, MAX_CONCURRENCY);
+        }
+      } else if ((evt.type === 'chunk_progress' || evt.type === 'chunk_received') && evt.data) {
+        const chunk = evt.data;
+        if (chunk.instant_mbs !== undefined) {
+          document.getElementById('dialThroughputVal').textContent = chunk.instant_mbs.toFixed(2);
+          setDialProgress('dialThroughputProg', chunk.instant_mbs, MAX_THROUGHPUT);
+        }
+        if (chunk.session_id) {
+          const idx = lastActiveSessions.findIndex(s => s.session_id === chunk.session_id);
+          if (idx >= 0) {
+            lastActiveSessions[idx] = Object.assign(lastActiveSessions[idx], chunk);
+          } else {
+            lastActiveSessions.push(chunk);
+          }
+          const existingRow = document.getElementById('stream-' + chunk.session_id);
+          if (existingRow) {
+            updateStreamRowInPlace(existingRow, chunk);
+          } else {
+            renderActiveStreams(lastActiveSessions, lastRecentSessions);
+          }
+        }
+        const portNum = chunk.port || PROTO_TO_PORT[chunk.protocol] || 0;
+        if (portNum > 0) {
+          setPortReceivingInPlace(portNum);
+        }
+        if (chunk.protocol) {
+          setProtoStreamingInPlace(chunk.protocol);
+        }
+        scheduleFetchMetrics();
+      } else if (evt.type === 'session_complete') {
+        if (evt.data && evt.data.session_id) {
+          const sc = evt.data;
+          lastActiveSessions = lastActiveSessions.filter(s => s.session_id !== sc.session_id);
+          lastRecentSessions = [sc, ...lastRecentSessions.filter(s => s.session_id !== sc.session_id)].slice(0, 100);
+          renderActiveStreams(lastActiveSessions, lastRecentSessions);
+        }
+        fetchMetrics();
+      } else if (evt.type === 'connection_open' || evt.type === 'probe_received' || evt.type === 'report_uploaded') {
+        fetchMetrics();
+      }
+
+      if (evt.message && evt.type !== 'heartbeat' && evt.type !== 'rate_tick') {
+        let lvl = 'INFO';
+        if (evt.type === 'chunk_progress' || evt.type === 'chunk_received') lvl = 'EXFIL';
+        else if (evt.type === 'session_complete') {
+          const v = evt.verdict || (evt.data && evt.data.verdict) || '';
+          lvl = (v.indexOf('BLOCKED') !== -1) ? 'ALERT' : 'SUCCESS';
+        }
+        else if (evt.type === 'probe_received') lvl = 'WARN';
+        else if (evt.type === 'connection_open') lvl = 'INFO';
+
+        addLogToTerminal({
+          timestamp: evt.timestamp ? (evt.timestamp.length > 12 ? evt.timestamp.substring(11, 23) : evt.timestamp) : '',
+          level: lvl,
+          zone: evt.network_zone,
+          host: evt.client_host,
+          protocol: evt.protocol,
+          message: evt.message
+        });
+      }
+    }
+
+    function updateDashboardState(state) {
+      if (!state) return;
+
+      const g = state.global || {};
+
+      // 1. Throughput Dial
+      const throughput = g.instant_throughput_mbs || 0;
+      document.getElementById('dialThroughputVal').textContent = throughput.toFixed(2);
+      setDialProgress('dialThroughputProg', throughput, MAX_THROUGHPUT);
+      document.getElementById('dialPeakThroughput').textContent = `Peak: ${(g.peak_throughput_mbs || 0).toFixed(2)} MB/s`;
+
+      // 2. Volume Dial
+      const volumeFormatted = g.smuggled_formatted || '0 B';
+      document.getElementById('dialVolumeVal').textContent = volumeFormatted;
+      setDialProgress('dialVolumeProg', (g.total_bytes_smuggled || 0) % (1024 * 1024 * 1024), 1024 * 1024 * 1024);
+      document.getElementById('dialTotalChunks').textContent = `${g.total_chunks || 0} Chunks Assembled`;
+
+      // 3. EEI Dial
+      const eei = g.global_eei_score || 0;
+      document.getElementById('dialEEIVal').textContent = `${eei.toFixed(0)}%`;
+      document.getElementById('dialEEIPosture').textContent = (g.eei_posture || 'HARDENED').toUpperCase();
+      setDialProgress('dialEEIProg', eei, 100.0);
+      updateEEIColor(eei);
+
+      // 4. Concurrency Dial
+      const activeCount = g.active_streams || 0;
+      document.getElementById('dialConcVal').textContent = activeCount;
+      setDialProgress('dialConcProg', activeCount, MAX_CONCURRENCY);
+      document.getElementById('dialTotalSessions').textContent = `${g.total_sessions || 0} Total Sessions`;
+
+      // Active & Recent Streams
+      lastActiveSessions = state.active_sessions || [];
+      lastRecentSessions = state.recent_sessions || [];
+      renderActiveStreams(lastActiveSessions, lastRecentSessions);
+
+      // Protocols
+      if (state.protocols) {
+        renderProtocols(state.protocols);
+      }
+
+      // Monitored Ports Matrix
+      if (state.ports) {
+        renderPorts(state.ports);
+      }
+
+      // Reports
+      if (state.reports) {
+        renderReports(state.reports);
+      }
+    }
+
+    function fetchMetrics() {
+      fetch('/api/v1/live/metrics')
+        .then(res => res.json())
+        .then(data => {
+          updateDashboardState(data);
+          if (data.recent_logs && data.recent_logs.length > 0) {
+            data.recent_logs.forEach(addLogToTerminal);
+          }
+        })
+        .catch(err => console.error("Failed to fetch initial metrics:", err));
+    }
+
+    function updateLiveClock() {
+      const clockEl = document.getElementById('liveClock');
+      if (!clockEl) return;
+      const now = new Date();
+      const h = String(now.getUTCHours()).padStart(2, '0');
+      const m = String(now.getUTCMinutes()).padStart(2, '0');
+      const s = String(now.getUTCSeconds()).padStart(2, '0');
+      clockEl.textContent = `${h}:${m}:${s} UTC`;
+    }
+
+    // Initial Load
+    window.addEventListener('DOMContentLoaded', () => {
+      updateLiveClock();
+      setInterval(updateLiveClock, 1000);
+      initTerminalScrollListener();
+      fetchMetrics();
+      setupSSE();
+      updateGeneratedCommand();
+    });
+  </script>
+</body>
+</html>

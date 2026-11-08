@@ -1,0 +1,33 @@
+# Binaries and build artifacts
+bin/
+/contraband
+/contraband-client
+/contraband-server
+*.exe
+*.test
+minio-server
+*.out
+*.prof
+
+# Evidence and test runtime outputs
+evidence/
+results/
+server-results/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# OS and IDE artifacts
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+*.log
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+

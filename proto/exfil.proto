@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package contraband;
+option go_package = "github.com/shehzade/contraband/proto;proto";
+
+service ExfilService {
+  rpc UploadChunk(ChunkRequest) returns (ChunkResponse);
+  rpc UploadStream(stream ChunkRequest) returns (ChunkResponse);
+}
+
+message ChunkRequest {
+  bytes token = 1;          // 16-byte session token
+  uint32 sequence = 2;      // Chunk sequence number (1-based)
+  uint32 total_chunks = 3;  // Total chunk count
+  bytes payload = 4;        // Chunk binary payload
+  string expected_hash = 5; // Expected SHA-256 hash of complete stream
+}
+
+message ChunkResponse {
+  bool success = 1;
+  string session_id = 2;
+  int64 total_bytes = 3;
+  string payload_hash = 4;
+  string verdict = 5;       // e.g. "EXFIL_SUCCESS"
+  string error_message = 6;
+}

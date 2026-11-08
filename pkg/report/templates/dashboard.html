@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contraband Assessment Report — {{ .TargetHost }}</title>
+<style>
+  :root {
+    --bg-canvas: #080b11;
+    --bg-card: rgba(15, 23, 42, 0.78);
+    --bg-card-inner: rgba(30, 41, 59, 0.55);
+    --bg-input: rgba(15, 23, 42, 0.95);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-focus: #38bdf8;
+    --text-primary: #f1f5f9;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --text-highlight: #ffffff;
+    
+    --color-green: #10b981;
+    --color-green-glow: rgba(16, 185, 129, 0.25);
+    --color-sky: #38bdf8;
+    --color-sky-glow: rgba(56, 189, 248, 0.25);
+    --color-amber: #f59e0b;
+    --color-amber-glow: rgba(245, 158, 11, 0.25);
+    --color-rose: #f43f5e;
+    --color-rose-glow: rgba(244, 63, 94, 0.25);
+    --color-purple: #a855f7;
+    --color-purple-glow: rgba(168, 85, 247, 0.25);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background-color: var(--bg-canvas);
+    background-image: 
+      radial-gradient(ellipse at 15% -5%, rgba(56, 189, 248, 0.07) 0%, transparent 60%),
+      radial-gradient(ellipse at 85% -5%, rgba(244, 63, 94, 0.05) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 100%, rgba(16, 185, 129, 0.04) 0%, transparent 60%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+    padding: 28px 24px 64px;
+  }
+
+  code, pre, .mono {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  .container { max-width: 1440px; margin: 0 auto; }
+
+  /* Header */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 26px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .brand-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(244, 63, 94, 0.2));
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.2);
+  }
+
+  .brand-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: var(--color-sky);
+    stroke-width: 2;
+  }
+
+  .brand h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-highlight);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .brand .tagline {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: -0.01em;
+  }
+
+  .meta-pills {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .pill {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .pill strong {
+    color: var(--text-highlight);
+    font-weight: 600;
+  }
+
+  .pill.version {
+    border-color: rgba(56, 189, 248, 0.3);
+    color: var(--color-sky);
+    background: rgba(56, 189, 248, 0.08);
+  }
+
+  /* Grid Layouts */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 960px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 22px;
+    position: relative;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .card-header h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-highlight);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .card-header h2 svg {
+    width: 17px;
+    height: 17px;
+    stroke: var(--color-sky);
+  }
+
+  /* Gauge Component */
+  .gauge-box {
+    text-align: center;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .gauge-svg {
+    width: 280px;
+    height: 155px;
+    overflow: visible;
+  }
+
+  .gauge-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.06);
+    stroke-width: 16;
+    stroke-linecap: round;
+  }
+
+  .gauge-val {
+    fill: none;
+    stroke-width: 16;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .gauge-needle-group {
+    transform-origin: 150px 140px;
+    transform-box: view-box;
+    transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .gauge-needle {
+    stroke: #ffffff;
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+  }
+
+  .gauge-needle-poly {
+    fill: #ffffff;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.75));
+  }
+
+  .gauge-score {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text-highlight);
+    margin-top: -8px;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .posture-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+
+  .posture-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .posture-hardened {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--color-green);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+  }
+  .posture-hardened::before {
+    background: var(--color-green);
+    box-shadow: 0 0 6px var(--color-green);
+  }
+
+  .posture-moderate {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--color-amber);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+  }
+  .posture-moderate::before {
+    background: var(--color-amber);
+    box-shadow: 0 0 6px var(--color-amber);
+  }
+
+  .posture-critical {
+    background: rgba(244, 63, 94, 0.12);
+    color: var(--color-rose);
+    border: 1px solid rgba(244, 63, 94, 0.35);
+  }
+  .posture-critical::before {
+    background: var(--color-rose);
+    box-shadow: 0 0 6px var(--color-rose);
+  }
+
+  /* Category breakdown bars inside gauge card */
+  .category-bars {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+  }
+
+  .cat-item { font-size: 11px; }
+
+  .cat-head {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .cat-head strong {
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cat-bar-bg {
+    background: rgba(255, 255, 255, 0.05);
+    height: 6px;
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.8s ease;
+  }
+
+  /* KPI Summary */
+  .kpi-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  }
+
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .kpi-title {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+
+  .kpi-val {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-highlight);
+    margin: 8px 0 4px;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .badge::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+  }
+
+  .badge-success {
+    background: rgba(244, 63, 94, 0.12);
+    color: #fda4af;
+    border: 1px solid rgba(244, 63, 94, 0.35);
+  }
+  .badge-success::before {
+    background: var(--color-rose);
+    box-shadow: 0 0 5px var(--color-rose);
+  }
+
+  .badge-blocked-l4 {
+    background: rgba(16, 185, 129, 0.12);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+  }
+  .badge-blocked-l4::before {
+    background: var(--color-green);
+    box-shadow: 0 0 5px var(--color-green);
+  }
+
+  .badge-blocked-l7 {
+    background: rgba(56, 189, 248, 0.12);
+    color: #7dd3fc;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+  }
+  .badge-blocked-l7::before {
+    background: var(--color-sky);
+    box-shadow: 0 0 5px var(--color-sky);
+  }
+
+  .badge-blocked-dlp {
+    background: rgba(245, 158, 11, 0.12);
+    color: #fcd34d;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+  }
+  .badge-blocked-dlp::before {
+    background: var(--color-amber);
+    box-shadow: 0 0 5px var(--color-amber);
+  }
+
+  .badge-unknown {
+    background: rgba(148, 163, 184, 0.12);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+
+  /* Heatmap */
+  .heatmap-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .search-input {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 7px 14px;
+    color: var(--text-highlight);
+    font-size: 12px;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+
+  .search-input:focus {
+    border-color: var(--color-sky);
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+  }
+
+  .btn-filter {
+    background: var(--bg-card-inner);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 7px 12px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+
+  .btn-filter.active, .btn-filter:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-highlight);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .btn-filter.active {
+    border-color: var(--color-sky);
+    color: var(--color-sky);
+  }
+
+  .heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+    gap: 7px;
+    max-height: 290px;
+    overflow-y: auto;
+    padding: 6px;
+    background: rgba(8, 11, 17, 0.7);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+  }
+
+  .port-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+  }
+
+  .port-cell:hover {
+    transform: scale(1.18);
+    z-index: 20;
+    box-shadow: 0 0 12px currentColor;
+  }
+
+  /* Support both verdict-* and cell-* classes for robust rendering */
+  .verdict-success, .cell-success {
+    background: rgba(244, 63, 94, 0.18);
+    border: 1px solid rgba(244, 63, 94, 0.6);
+    color: #fda4af;
+  }
+
+  .verdict-blocked-l4, .cell-blocked-l4 {
+    background: rgba(16, 185, 129, 0.14);
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    color: #6ee7b7;
+  }
+
+  .verdict-blocked-l7, .cell-blocked-l7 {
+    background: rgba(56, 189, 248, 0.14);
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    color: #7dd3fc;
+  }
+
+  .verdict-blocked-dlp, .cell-blocked-dlp {
+    background: rgba(245, 158, 11, 0.14);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    color: #fcd34d;
+  }
+
+  .verdict-unknown, .cell-unknown {
+    background: rgba(148, 163, 184, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    color: #cbd5e1;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    visibility: hidden;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #020617;
+    color: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 30;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+    line-height: 1.4;
+  }
+
+  .tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #020617 transparent transparent transparent;
+  }
+
+  .port-cell:hover .tooltip { visibility: visible; }
+
+  /* Tables */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: left;
+  }
+
+  th {
+    background: rgba(15, 23, 42, 0.95);
+    color: var(--text-muted);
+    font-weight: 700;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border-color);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 11px;
+    position: sticky;
+    top: 0;
+    backdrop-filter: blur(8px);
+  }
+
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  tr.selected td {
+    background: rgba(56, 189, 248, 0.12) !important;
+  }
+
+  /* Expandable Forensic Drawer */
+  .drawer-row { display: none; }
+  .drawer-row.open { display: table-row; }
+  .drawer-content {
+    background: rgba(8, 11, 17, 0.95);
+    padding: 18px;
+    border-radius: 8px;
+    margin: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+  }
+
+  .waterfall-bar-group {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .waterfall-tcp { background: var(--color-green); }
+  .waterfall-tls { background: var(--color-sky); }
+  .waterfall-transfer { background: var(--color-amber); }
+
+  /* Credentials Vault */
+  .cred-card {
+    background: rgba(8, 11, 17, 0.7);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+
+  .cred-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 12px;
+  }
+
+  .hashcat-syntax {
+    background: #020617;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 12px 14px;
+    border-radius: 6px;
+    word-break: break-all;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #e2e8f0;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 18px;
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    padding: 9px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .tab-btn.active {
+    color: var(--color-sky);
+    border-bottom-color: var(--color-sky);
+  }
+
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* Code blocks & Buttons */
+  .code-block {
+    background: #020617;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 11px;
+    color: #cbd5e1;
+    overflow-x: auto;
+    max-height: 380px;
+    line-height: 1.5;
+    position: relative;
+    white-space: pre;
+  }
+
+  .btn-copy {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(30, 41, 59, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-copy:hover {
+    color: var(--text-highlight);
+    border-color: var(--color-sky);
+    background: rgba(56, 189, 248, 0.15);
+  }
+
+  /* Efficacy Matrix */
+  .matrix-table th, .matrix-table td { text-align: center; }
+  .matrix-table th:first-child, .matrix-table td:first-child { text-align: left; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--text-muted);
+  }
+
+  .empty-state svg {
+    width: 40px;
+    height: 40px;
+    stroke: var(--color-green);
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div>
+        <h1>CONTRABAND</h1>
+        <div class="tagline">Automated Egress Assessment & Data Smuggling Forensics</div>
+      </div>
+    </div>
+    <div class="meta-pills">
+      <div class="pill">Target: <strong>{{ .TargetHost }}</strong></div>
+      <div class="pill">Generated: <strong>{{ formatRFC3339MS .GeneratedAt }}</strong></div>
+      <div class="pill">Duration: <strong>{{ .DurationText }}</strong></div>
+      <div class="pill version">v{{ .Version }}</div>
+    </div>
+  </header>
+
+  <!-- Section 1: Executive Summary & Gauge -->
+  <div class="grid-2">
+    <!-- Semi-Circle Gauge Card -->
+    <div class="card gauge-box">
+      <div class="card-header" style="width: 100%;">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+          </svg>
+          Egress Exposure Index
+        </h2>
+      </div>
+      <svg class="gauge-svg" viewBox="0 0 300 160">
+        <defs>
+          <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#22c55e"/>
+            <stop offset="25%" stop-color="#38bdf8"/>
+            <stop offset="50%" stop-color="#f59e0b"/>
+            <stop offset="75%" stop-color="#f97316"/>
+            <stop offset="100%" stop-color="#ef4444"/>
+          </linearGradient>
+          <filter id="gaugeGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+        <!-- Background Track -->
+        <path class="gauge-bg" d="M 50 140 A 100 100 0 0 1 250 140" />
+        <!-- Dynamic Colored Track -->
+        <path class="gauge-val" stroke="url(#gaugeGrad)" filter="url(#gaugeGlow)"
+              d="M 50 140 A 100 100 0 0 1 250 140"
+              stroke-dasharray="314.16"
+              stroke-dashoffset="{{ calcGaugeOffset .Summary.EEIScore }}" />
+        <!-- Needle rotating from base 0-degree vector (238, 140) around pivot (150, 140) -->
+        <g class="gauge-needle-group" transform="rotate({{ calcNeedleAngle .Summary.EEIScore }} 150 140)">
+          <polygon class="gauge-needle-poly" points="144,138.2 234,139.3 238,140 234,140.7 144,141.8 138,140" />
+          <circle cx="150" cy="140" r="7" fill="#0f172a" stroke="#ffffff" stroke-width="2" />
+          <circle cx="150" cy="140" r="3" fill="#38bdf8" />
+        </g>
+      </svg>
+      <div class="gauge-score">{{ printf "%.1f" .Summary.EEIScore }}%</div>
+      {{ if eq .Summary.Posture "Hardened" }}
+        <div class="posture-badge posture-hardened">Hardened Perimeter</div>
+      {{ else if eq .Summary.Posture "Moderate" }}
+        <div class="posture-badge posture-moderate">Moderate Exposure</div>
+      {{ else }}
+        <div class="posture-badge posture-critical">Critical Exposure</div>
+      {{ end }}
+
+      <div class="category-bars">
+        <div class="cat-item">
+          <div class="cat-head"><span>L4 Ports (Sport 30%)</span><strong>{{ printf "%.1f" .Summary.Sport }}%</strong></div>
+          <div class="cat-bar-bg"><div class="cat-bar-fill" style="width: {{ .Summary.Sport }}%; background: var(--color-green);"></div></div>
+        </div>
+        <div class="cat-item">
+          <div class="cat-head"><span>L7 Protocols (Sproto 40%)</span><strong>{{ printf "%.1f" .Summary.Sproto }}%</strong></div>
+          <div class="cat-bar-bg"><div class="cat-bar-fill" style="width: {{ .Summary.Sproto }}%; background: var(--color-sky);"></div></div>
+        </div>
+        <div class="cat-item">
+          <div class="cat-head"><span>DLP Efficacy (Sdlp 30%)</span><strong>{{ printf "%.1f" .Summary.Sdlp }}%</strong></div>
+          <div class="cat-bar-bg"><div class="cat-bar-fill" style="width: {{ .Summary.Sdlp }}%; background: var(--color-amber);"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Summary Grid -->
+    <div>
+      <div class="grid-4" style="margin-bottom: 16px;">
+        <div class="card kpi-card">
+          <div class="kpi-title">Probes Tested</div>
+          <div class="kpi-val">{{ .Summary.TotalProbes }}</div>
+          <div class="kpi-sub">{{ .Summary.SuccessCount }} successful / open</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-title">L4 Blocked</div>
+          <div class="kpi-val" style="color: var(--color-green);">{{ .Summary.BlockedL4 }}</div>
+          <div class="kpi-sub">Firewall drops & resets</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-title">L7 Blocked</div>
+          <div class="kpi-val" style="color: var(--color-sky);">{{ .Summary.BlockedL7 }}</div>
+          <div class="kpi-sub">Proxy & DPI rejections</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-title">DLP Intercepted</div>
+          <div class="kpi-val" style="color: var(--color-amber);">{{ .Summary.BlockedDLP }}</div>
+          <div class="kpi-sub">Content filters triggered</div>
+        </div>
+      </div>
+      <div class="grid-4">
+        <div class="card kpi-card">
+          <div class="kpi-title">Exfiltrated Volume</div>
+          <div class="kpi-val">{{ formatBytes .Summary.TotalBytesSent }}</div>
+          <div class="kpi-sub">{{ formatBytes .Summary.TotalBytesRecv }} received back</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-title">Average Latency</div>
+          <div class="kpi-val">{{ formatMS .Summary.AvgLatencyMS }}</div>
+          <div class="kpi-sub">Per probe round-trip</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-title">Credentials Vault</div>
+          <div class="kpi-val" style="color: {{ if gt .Summary.TotalCredentials 0 }}var(--color-rose){{ else }}var(--color-green){{ end }};">
+            {{ .Summary.TotalCredentials }}
+          </div>
+          <div class="kpi-sub">Harvested hashes & keys</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-title">Findings Total</div>
+          <div class="kpi-val">{{ len .Findings }}</div>
+          <div class="kpi-sub">SARIF rules flagged</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Layer 4 Egress Port Matrix Heatmap -->
+  <div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+          <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+          <line x1="6" y1="6" x2="6.01" y2="6"/>
+          <line x1="6" y1="18" x2="6.01" y2="18"/>
+        </svg>
+        Layer 4 Egress Port Heatmap
+      </h2>
+      <div class="heatmap-controls">
+        <input type="text" id="portSearch" class="search-input" placeholder="Search port (e.g. 443)..." onkeyup="filterHeatmap()">
+        <button class="btn-filter active" onclick="setHeatmapFilter('all', this)">All</button>
+        <button class="btn-filter" onclick="setHeatmapFilter('EXFIL_SUCCESS', this)">Open (Success)</button>
+        <button class="btn-filter" onclick="setHeatmapFilter('BLOCKED_L4', this)">Blocked L4</button>
+        <button class="btn-filter" onclick="setHeatmapFilter('BLOCKED_L7', this)">Blocked L7</button>
+        <button class="btn-filter" onclick="setHeatmapFilter('BLOCKED_DLP', this)">Blocked DLP</button>
+      </div>
+    </div>
+    <div class="heatmap-grid" id="heatmapGrid">
+      {{ range .Probes }}
+        {{ if gt .TargetPort 0 }}
+        <div class="port-cell {{ verdictClass .Verdict }}" data-port="{{ .TargetPort }}" data-verdict="{{ .Verdict }}" onclick="jumpToProbe('{{ .ID }}')">
+          {{ .TargetPort }}
+          <div class="tooltip">
+            <strong>Port {{ .TargetPort }}/{{ .Protocol }}</strong><br>
+            Verdict: {{ .Verdict }}<br>
+            Latency: {{ formatMS (divDurMS .Timestamps.TotalDuration) }}<br>
+            {{ if .ErrorMessage }}Error: {{ .ErrorMessage }}{{ end }}
+          </div>
+        </div>
+        {{ end }}
+      {{ end }}
+    </div>
+  </div>
+
+  <!-- Section 3: Layer 7 Protocol & uTLS Inspection Breakdown -->
+  <div class="grid-2" style="margin-bottom: 24px;">
+    <!-- Protocol Matrix -->
+    <div class="card">
+      <div class="card-header">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+          </svg>
+          Layer 7 Protocol Smuggling
+        </h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Protocol</th><th>Port</th><th>Verdict</th><th>Latency</th></tr>
+          </thead>
+          <tbody>
+            {{ range .Probes }}
+              {{ if and (ne .Protocol "tcp") (ne .Protocol "udp") }}
+              <tr>
+                <td><strong>{{ .Protocol }}</strong></td>
+                <td>{{ .TargetPort }}</td>
+                <td>{{ verdictBadge .Verdict }}</td>
+                <td>{{ formatMS (divDurMS .Timestamps.TotalDuration) }}</td>
+              </tr>
+              {{ end }}
+            {{ end }}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- uTLS JA3/JA4 Fingerprint Table -->
+    <div class="card">
+      <div class="card-header">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          uTLS & JA4 Fingerprints
+        </h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Profile</th><th>JA4 Fingerprint</th><th>Verdict</th></tr>
+          </thead>
+          <tbody>
+            {{ range .Probes }}
+              {{ if .JA4String }}
+              <tr>
+                <td><strong>{{ .TLSProfile }}</strong></td>
+                <td>
+                  <code class="mono" style="font-size: 11px;">{{ truncateHash .JA4String 24 }}</code>
+                  <button class="btn-copy" style="position:static; margin-left: 6px;" onclick="copyText('{{ .JA4String }}', this)">Copy</button>
+                </td>
+                <td>{{ verdictBadge .Verdict }}</td>
+              </tr>
+              {{ end }}
+            {{ end }}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: DLP & Steganography Efficacy Scorecard -->
+  <div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Synthetic DLP & Steganography Efficacy Scorecard
+      </h2>
+    </div>
+    <div class="table-wrap">
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th>Payload Type</th>
+            <th>Carrier</th>
+            <th>Volume</th>
+            <th>Throughput</th>
+            <th>Payload SHA-256</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .Probes }}
+            {{ if .PayloadType }}
+            <tr>
+              <td><strong>{{ .PayloadType }}</strong></td>
+              <td>{{ .CarrierType }}</td>
+              <td>{{ formatBytes .TargetVolume }}</td>
+              <td>{{ printf "%.1f" .ThroughputBps }} KB/s</td>
+              <td><code class="mono">{{ truncateHash .PayloadHash 16 }}</code></td>
+              <td>{{ verdictBadge .Verdict }}</td>
+            </tr>
+            {{ end }}
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Section 5: Captured Credentials Vault -->
+  <div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+        </svg>
+        Captured Credentials Vault (Hashcat Mode 5600)
+      </h2>
+    </div>
+    {{ if eq (len .Credentials) 0 }}
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <p>No credentials or NetNTLMv2 authentication hashes were exposed during assessment.</p>
+      </div>
+    {{ else }}
+      {{ range .Credentials }}
+      <div class="cred-card">
+        <div class="cred-header">
+          <div>
+            <strong>{{ .Protocol }}</strong> &bull; User: <span class="mono">{{ .Username }}</span> &bull; Domain: <span class="mono">{{ .Domain }}</span>
+          </div>
+          <button class="btn-copy" style="position:static;" onclick="copyText('{{ .Hash }}', this)">Copy Hashcat Format</button>
+        </div>
+        <div class="hashcat-syntax mono">
+          {{ .Hash }}
+        </div>
+      </div>
+      {{ end }}
+    {{ end }}
+  </div>
+
+  <!-- Section 6: Deep Chronological Forensic Event Log -->
+  <div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+        Forensic Event Log
+      </h2>
+      <div>
+        <input type="text" id="logSearch" class="search-input" placeholder="Search event log..." onkeyup="filterLogTable()">
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="logTable">
+        <thead>
+          <tr>
+            <th>Time (UTC)</th>
+            <th>Stage</th>
+            <th>Proto</th>
+            <th>Port</th>
+            <th>Verdict</th>
+            <th>Latency</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range $i, $p := .Probes }}
+          <tr id="probe-{{ $p.ID }}">
+            <td>{{ formatRFC3339MS $p.Timestamp }}</td>
+            <td><span class="mono">{{ $p.Stage }}</span></td>
+            <td><strong>{{ $p.Protocol }}</strong></td>
+            <td>{{ $p.TargetPort }}</td>
+            <td>{{ verdictBadge $p.Verdict }}</td>
+            <td>{{ formatMS (divDurMS $p.Timestamps.TotalDuration) }}</td>
+            <td>
+              <button class="btn-filter" style="padding: 3px 10px; font-size: 11px;" onclick="toggleDrawer('drawer-{{ $i }}')">Inspect</button>
+            </td>
+          </tr>
+          <!-- Expandable Forensic Drawer -->
+          <tr id="drawer-{{ $i }}" class="drawer-row">
+            <td colspan="7">
+              <div class="drawer-content">
+                <h4 style="margin-bottom: 8px; font-size: 12px; color: var(--text-highlight);">Forensic Timing Breakdown (ms)</h4>
+                <div class="waterfall-bar-group">
+                  <div class="waterfall-tcp" style="width: 25%;" title="TCP Handshake"></div>
+                  <div class="waterfall-tls" style="width: 35%;" title="TLS Handshake"></div>
+                  <div class="waterfall-transfer" style="width: 40%;" title="Payload Transfer"></div>
+                </div>
+                <div style="display: flex; gap: 16px; font-size: 11px; color: var(--text-muted); margin-bottom: 12px; flex-wrap: wrap;">
+                  <span>TCP: <strong>{{ formatMS (divDurMS $p.Timestamps.TCPDuration) }}</strong></span>
+                  <span>TLS: <strong>{{ formatMS (divDurMS $p.Timestamps.TLSDuration) }}</strong></span>
+                  <span>Transfer: <strong>{{ formatMS (divDurMS $p.Timestamps.TransferDuration) }}</strong></span>
+                  <span>Total: <strong>{{ formatMS (divDurMS $p.Timestamps.TotalDuration) }}</strong></span>
+                </div>
+                {{ if $p.PayloadHash }}
+                <div style="font-size: 11px; margin-bottom: 8px;">
+                  Payload SHA-256: <code class="mono">{{ $p.PayloadHash }}</code>
+                </div>
+                {{ end }}
+                {{ if $p.RawEvidence }}
+                <h4 style="margin-bottom: 6px; font-size: 12px; color: var(--text-highlight);">Bounded Raw Evidence Hex Dump</h4>
+                <div class="code-block mono" style="max-height: 180px;">{{ $p.RawEvidence }}</div>
+                {{ end }}
+              </div>
+            </td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Section 7: Multi-Vendor Firewall Remediation Rules -->
+  <div class="card">
+    <div class="card-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+        Firewall Remediation Rules
+      </h2>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('iptables', this)">Linux iptables</button>
+      <button class="tab-btn" onclick="showTab('nftables', this)">Linux nftables</button>
+      <button class="tab-btn" onclick="showTab('panos', this)">Palo Alto (PAN-OS)</button>
+      <button class="tab-btn" onclick="showTab('fortigate', this)">Fortinet FortiGate</button>
+      <button class="tab-btn" onclick="showTab('cisco_asa', this)">Cisco ASA</button>
+    </div>
+
+    <div id="tab-iptables" class="tab-pane active">
+      <div style="position: relative;">
+        <button class="btn-copy" onclick="copyBlock('code-iptables', this)">Copy iptables</button>
+        <div id="code-iptables" class="code-block mono">{{ .Remediation.IPTablesRules }}</div>
+      </div>
+    </div>
+    <div id="tab-nftables" class="tab-pane">
+      <div style="position: relative;">
+        <button class="btn-copy" onclick="copyBlock('code-nftables', this)">Copy nftables</button>
+        <div id="code-nftables" class="code-block mono">{{ .Remediation.NFTablesRules }}</div>
+      </div>
+    </div>
+    <div id="tab-panos" class="tab-pane">
+      <div style="position: relative;">
+        <button class="btn-copy" onclick="copyBlock('code-panos', this)">Copy PAN-OS</button>
+        <div id="code-panos" class="code-block mono">{{ .Remediation.PANOSRules }}</div>
+      </div>
+    </div>
+    <div id="tab-fortigate" class="tab-pane">
+      <div style="position: relative;">
+        <button class="btn-copy" onclick="copyBlock('code-fortigate', this)">Copy FortiGate</button>
+        <div id="code-fortigate" class="code-block mono">{{ .Remediation.FortiGateRules }}</div>
+      </div>
+    </div>
+    <div id="tab-cisco_asa" class="tab-pane">
+      <div style="position: relative;">
+        <button class="btn-copy" onclick="copyBlock('code-cisco_asa', this)">Copy Cisco ASA</button>
+        <div id="code-cisco_asa" class="code-block mono">{{ .Remediation.CiscoASARules }}</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Vanilla JS Interactions (Zero external JS, completely self-contained) -->
+<script>
+  function toggleDrawer(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (el.classList.contains('open')) {
+      el.classList.remove('open');
+    } else {
+      el.classList.add('open');
+    }
+  }
+
+  function showTab(vendor, btn) {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+    var pane = document.getElementById('tab-' + vendor);
+    if (pane) pane.classList.add('active');
+  }
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(function() {
+      var orig = btn.innerText;
+      btn.innerText = 'Copied! ✓';
+      btn.style.color = '#10b981';
+      btn.style.borderColor = '#10b981';
+      setTimeout(function() {
+        btn.innerText = orig;
+        btn.style.color = '';
+        btn.style.borderColor = '';
+      }, 1600);
+    });
+  }
+
+  function copyBlock(id, btn) {
+    var el = document.getElementById(id);
+    if (el) copyText(el.innerText, btn);
+  }
+
+  function setHeatmapFilter(verdict, btn) {
+    document.querySelectorAll('.heatmap-controls .btn-filter').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    var cells = document.querySelectorAll('.port-cell');
+    cells.forEach(function(cell) {
+      if (verdict === 'all' || cell.getAttribute('data-verdict') === verdict) {
+        cell.style.display = 'flex';
+      } else {
+        cell.style.display = 'none';
+      }
+    });
+  }
+
+  function filterHeatmap() {
+    var val = document.getElementById('portSearch').value.trim();
+    var cells = document.querySelectorAll('.port-cell');
+    cells.forEach(function(cell) {
+      if (!val || cell.getAttribute('data-port').indexOf(val) !== -1) {
+        cell.style.display = 'flex';
+      } else {
+        cell.style.display = 'none';
+      }
+    });
+  }
+
+  function jumpToProbe(id) {
+    var row = document.getElementById('probe-' + id);
+    if (row) {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.classList.add('selected');
+      setTimeout(function() { row.classList.remove('selected'); }, 2000);
+    }
+  }
+
+  function filterLogTable() {
+    var val = document.getElementById('logSearch').value.toLowerCase();
+    var rows = document.querySelectorAll('#logTable tbody tr:not(.drawer-row)');
+    rows.forEach(function(row) {
+      var text = row.innerText.toLowerCase();
+      row.style.display = (!val || text.indexOf(val) !== -1) ? '' : 'none';
+    });
+  }
+</script>
+</body>
+</html>
